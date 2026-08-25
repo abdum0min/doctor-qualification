@@ -1,3 +1,5 @@
+import type { QualificationLevel } from '@/features/attempts'
+
 export interface DoctorSpecialty {
   id: number
   name: string
@@ -14,4 +16,29 @@ export interface DoctorProfile {
   experienceYears: number | null
   createdAt: string
   updatedAt: string
+}
+
+export interface DoctorLatestAttempt {
+  id: number
+  examTitle: string
+  specialtyName: string
+  score: number
+  qualification: QualificationLevel
+  passed: boolean
+  completedAt: string | null
+}
+
+export interface DoctorStats {
+  totalAttempts: number
+  completedAttempts: number
+  passedAttempts: number
+  bestScore: number | null
+  averageScore: number | null
+  currentQualification: QualificationLevel | null
+  latestAttempt: DoctorLatestAttempt | null
+}
+
+export interface DoctorOverview {
+  profile: DoctorProfile
+  stats: DoctorStats
 }

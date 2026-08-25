@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
+import { AttemptStatus, QualificationLevel } from 'src/generated/prisma/enums';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
 import { SpecialtiesService } from 'src/modules/specialties/specialties.service';
 
@@ -21,6 +22,32 @@ export interface DoctorProfileView {
   experienceYears: number | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface DoctorLatestAttemptView {
+  id: number;
+  examTitle: string;
+  specialtyName: string;
+  score: number;
+  qualification: QualificationLevel;
+  passed: boolean;
+  completedAt: Date | null;
+}
+
+export interface DoctorStatsView {
+  totalAttempts: number;
+  completedAttempts: number;
+  passedAttempts: number;
+  bestScore: number | null;
+  averageScore: number | null;
+  /** Oxirgi yakunlangan urinishdan olinadi. */
+  currentQualification: QualificationLevel | null;
+  latestAttempt: DoctorLatestAttemptView | null;
+}
+
+export interface DoctorOverviewView {
+  profile: DoctorProfileView;
+  stats: DoctorStatsView;
 }
 
 const profileSelect = {
@@ -67,6 +94,12 @@ export class DoctorsService {
     return toView(profile);
   }
 
+  async findOwnOverview(userId: number): Promise<DoctorOverviewView> {
+    const profile = await this.findOwnProfile(userId);
+
+    return { profile, stats: await this.buildStats(profile.id) };
+  }
+
   async updateOwnProfile(
     userId: number,
     dto: UpdateDoctorProfileDto,
@@ -90,6 +123,64 @@ export class DoctorsService {
     });
 
     return toView(profile);
+  }
+
+  private async buildStats(doctorProfileId: number): Promise<DoctorStatsView> {
+    const completedWhere = {
+      doctorProfileId,
+      status: { in: [AttemptStatus.SUBMITTED, AttemptStatus.EXPIRED] },
+    };
+
+    const [totalAttempts, completedAggregate, passedAttempts, latest] =
+      await Promise.all([
+        this.prisma.examAttempt.count({ where: { doctorProfileId } }),
+        this.prisma.examAttempt.aggregate({
+          where: completedWhere,
+          _count: { _all: true },
+          _max: { score: true },
+          _avg: { score: true },
+        }),
+        this.prisma.examAttempt.count({
+          where: { doctorProfileId, passed: true },
+        }),
+        this.prisma.examAttempt.findFirst({
+          where: completedWhere,
+          orderBy: [{ completedAt: 'desc' }, { id: 'desc' }],
+          select: {
+            id: true,
+            score: true,
+            qualification: true,
+            passed: true,
+            completedAt: true,
+            exam: {
+              select: { title: true, specialty: { select: { name: true } } },
+            },
+          },
+        }),
+      ]);
+
+    return {
+      totalAttempts,
+      completedAttempts: completedAggregate._count._all,
+      passedAttempts,
+      bestScore: completedAggregate._max.score,
+      averageScore:
+        completedAggregate._avg.score === null
+          ? null
+          : Math.round(completedAggregate._avg.score),
+      currentQualification: latest?.qualification ?? null,
+      latestAttempt: latest
+        ? {
+            id: latest.id,
+            examTitle: latest.exam.title,
+            specialtyName: latest.exam.specialty.name,
+            score: latest.score ?? 0,
+            qualification: latest.qualification ?? QualificationLevel.BEGINNER,
+            passed: latest.passed ?? false,
+            completedAt: latest.completedAt,
+          }
+        : null,
+    };
   }
 }
 

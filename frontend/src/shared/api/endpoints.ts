@@ -11,6 +11,7 @@ export const ENDPOINTS = {
   },
   doctors: {
     me: '/doctors/me',
+    overview: '/doctors/me/overview',
   },
   specialties: {
     root: '/specialties',

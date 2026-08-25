@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { CursorPaginated } from 'src/common/interfaces/api-response.interface';
 import { decodeCursor } from 'src/common/utils/cursor.util';
@@ -109,7 +113,11 @@ export class QuestionsService {
       await this.specialtiesService.ensureActive(specialtyId);
     }
 
-    await this.ensureExists(id);
+    const current = await this.ensureExists(id);
+
+    if (current.isActive && fields.isActive === false) {
+      await this.ensureExamsStaySatisfiable(current);
+    }
 
     return this.prisma.$transaction(async (tx) => {
       if (options) {
@@ -129,21 +137,77 @@ export class QuestionsService {
   }
 
   async remove(id: number): Promise<null> {
-    await this.ensureExists(id);
+    const question = await this.ensureExists(id);
+
+    if (question.isActive) {
+      await this.ensureExamsStaySatisfiable(question);
+    }
+
     await this.prisma.question.delete({ where: { id } });
 
     return null;
   }
 
-  private async ensureExists(id: number): Promise<void> {
+  /**
+   * Faol savolni olib tashlash mavjud imtihonni ishga tushib bo'lmaydigan
+   * holatga keltirmasligi kerak — sozlama va savol bazasi doim mos turadi.
+   */
+  private async ensureExamsStaySatisfiable(question: {
+    specialtyId: number;
+    difficulty: Difficulty;
+  }): Promise<void> {
+    const exams = await this.prisma.exam.findMany({
+      where: {
+        specialtyId: question.specialtyId,
+        isActive: true,
+        OR: [{ difficulty: null }, { difficulty: question.difficulty }],
+      },
+      select: { title: true, questionCount: true, difficulty: true },
+    });
+
+    if (exams.length === 0) {
+      return;
+    }
+
+    const blocked = await Promise.all(
+      exams.map(async (exam) => {
+        const remaining =
+          (await this.prisma.question.count({
+            where: {
+              specialtyId: question.specialtyId,
+              isActive: true,
+              ...(exam.difficulty ? { difficulty: exam.difficulty } : {}),
+            },
+          })) - 1;
+
+        return remaining < exam.questionCount ? exam : null;
+      }),
+    );
+
+    const broken = blocked.find((exam) => exam !== null);
+
+    if (broken) {
+      throw new BadRequestException(
+        `"${broken.title}" needs ${broken.questionCount} questions — deactivate that exam or add more questions first`,
+      );
+    }
+  }
+
+  private async ensureExists(id: number): Promise<{
+    specialtyId: number;
+    difficulty: Difficulty;
+    isActive: boolean;
+  }> {
     const exists = await this.prisma.question.findUnique({
       where: { id },
-      select: { id: true },
+      select: { specialtyId: true, difficulty: true, isActive: true },
     });
 
     if (!exists) {
       throw new NotFoundException('Question not found');
     }
+
+    return exists;
   }
 }
 
