@@ -14,6 +14,7 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { EnvironmentVariables, validateEnv } from './config/env.validation';
 import { AttemptsModule } from './modules/attempts/attempts.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CertificatesModule } from './modules/certificates/certificates.module';
 import { DoctorsModule } from './modules/doctors/doctors.module';
 import { ExamsModule } from './modules/exams/exams.module';
 import { HealthModule } from './modules/health/health.module';
@@ -49,6 +50,7 @@ import { SpecialtiesModule } from './modules/specialties/specialties.module';
     QuestionsModule,
     ExamsModule,
     AttemptsModule,
+    CertificatesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

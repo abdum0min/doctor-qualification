@@ -8,6 +8,7 @@ import {
   AdminSpecialtiesPage,
 } from '@/pages/admin'
 import { AttemptPage } from '@/pages/attempt-page'
+import { CertificatesPage } from '@/pages/certificates-page'
 import { DashboardPage } from '@/pages/dashboard-page'
 import { ExamsPage } from '@/pages/exams-page'
 import { LoginPage } from '@/pages/login-page'
@@ -58,6 +59,7 @@ export function AppRouter() {
             <Route path={ROUTES.dashboard} element={<DashboardPage />} />
             <Route path={ROUTES.exams} element={<ExamsPage />} />
             <Route path={ROUTES.attempt} element={<AttemptPage />} />
+            <Route path={ROUTES.certificates} element={<CertificatesPage />} />
             <Route path={ROUTES.profile} element={<ProfilePage />} />
           </Route>
 

@@ -33,5 +33,10 @@ export const ENDPOINTS = {
     answers: (id: number) => `/attempts/${id}/answers`,
     submit: (id: number) => `/attempts/${id}/submit`,
   },
+  certificates: {
+    root: '/certificates',
+    verify: (certificateId: string) => `/certificates/verify/${certificateId}`,
+    download: (certificateId: string) => `/certificates/${certificateId}/download`,
+  },
   health: '/health',
 } as const

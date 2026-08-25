@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { QualificationLevel } from 'src/generated/prisma/enums';
+import {
+  CertificateStatus,
+  QualificationLevel,
+} from 'src/generated/prisma/enums';
 
 import { DoctorProfileDto } from './doctor-profile.dto';
 
@@ -27,6 +30,20 @@ class DoctorLatestAttemptDto {
   completedAt: Date | null;
 }
 
+class DoctorCertificateSummaryDto {
+  @ApiProperty({ example: 'DOC-2026-000123' })
+  certificateId: string;
+
+  @ApiProperty({ enum: CertificateStatus })
+  status: CertificateStatus;
+
+  @ApiProperty({ example: '2026-08-25T10:22:00.000Z' })
+  issuedAt: Date;
+
+  @ApiProperty({ example: '2027-08-25T10:22:00.000Z' })
+  expiresAt: Date;
+}
+
 class DoctorStatsDto {
   @ApiProperty({ example: 4 })
   totalAttempts: number;
@@ -48,6 +65,12 @@ class DoctorStatsDto {
 
   @ApiProperty({ type: DoctorLatestAttemptDto, nullable: true })
   latestAttempt: DoctorLatestAttemptDto | null;
+
+  @ApiProperty({ example: 2 })
+  certificatesCount: number;
+
+  @ApiProperty({ type: DoctorCertificateSummaryDto, nullable: true })
+  latestCertificate: DoctorCertificateSummaryDto | null;
 }
 
 export class DoctorOverviewDto {

@@ -2,6 +2,7 @@ import {
   LayoutDashboard,
   Palette,
   ClipboardList,
+  Award,
   GraduationCap,
   FileQuestion,
   Stethoscope,
@@ -21,6 +22,7 @@ export interface NavItem {
 const DOCTOR_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.dashboard, label: 'Boshqaruv paneli', icon: LayoutDashboard },
   { to: ROUTES.exams, label: 'Imtihonlar', icon: GraduationCap },
+  { to: ROUTES.certificates, label: 'Sertifikatlar', icon: Award },
   { to: ROUTES.profile, label: 'Profil', icon: User },
 ]
 

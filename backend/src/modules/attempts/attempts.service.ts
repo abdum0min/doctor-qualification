@@ -14,6 +14,7 @@ import {
   Difficulty,
   QualificationLevel,
 } from 'src/generated/prisma/enums';
+import { CertificatesService } from 'src/modules/certificates/certificates.service';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
 
 import { AttemptEvaluator } from './attempt-evaluator';
@@ -134,6 +135,7 @@ export class AttemptsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly evaluator: AttemptEvaluator,
+    private readonly certificatesService: CertificatesService,
   ) {}
 
   async start(userId: number, examId: number): Promise<AttemptView> {
@@ -320,6 +322,7 @@ export class AttemptsService {
       const snapshot = await tx.examAttempt.findUniqueOrThrow({
         where: { id: attemptId },
         select: {
+          doctorProfileId: true,
           passingScore: true,
           questions: {
             select: {
@@ -341,7 +344,7 @@ export class AttemptsService {
         ),
       );
 
-      await tx.examAttempt.update({
+      const graded = await tx.examAttempt.update({
         where: { id: attemptId },
         data: {
           status: result.status,
@@ -351,7 +354,18 @@ export class AttemptsService {
           qualification: result.qualification,
           passed: result.passed,
         },
+        select: {
+          id: true,
+          doctorProfileId: true,
+          score: true,
+          qualification: true,
+          passed: true,
+        },
       });
+
+      // Natija va sertifikat birgalikda yoziladi — biri yozilib, ikkinchisi
+      // yozilmay qolgan holat bo'lmasligi kerak.
+      await this.certificatesService.issueForAttempt(tx, graded);
     });
 
     return this.loadReview(attemptId);

@@ -45,6 +45,11 @@ export class EnvironmentVariables {
   @IsNotEmpty()
   CORS_ORIGIN!: string;
 
+  /** Sertifikat QR kodi shu manzilga ishora qiladi. */
+  @IsString()
+  @IsNotEmpty()
+  PUBLIC_APP_URL: string = 'http://localhost:5173';
+
   /** Runtime ulanishi — Neon/Supabase'da pooled URL (`-pooler`) bo'lishi kerak. */
   @IsString()
   @IsNotEmpty()

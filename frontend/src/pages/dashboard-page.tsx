@@ -1,4 +1,4 @@
-import { Award, ClipboardCheck, Target, TrendingUp } from 'lucide-react'
+import { Award, ClipboardCheck, Target, TrendingUp, Trophy } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { AttemptHistoryTable, QualificationBadge } from '@/features/attempts'
@@ -48,7 +48,7 @@ export function DashboardPage() {
         errorMessage={(error as ApiError | null)?.message}
       >
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <StatCard
               icon={Target}
               tone="blue"
@@ -61,18 +61,25 @@ export function DashboardPage() {
               }
             />
             <StatCard
-              icon={Award}
-              tone="violet"
-              label="Malaka darajasi"
+              icon={Trophy}
+              tone="emerald"
+              label="Eng yuqori natija"
               value={stats?.bestScore !== null && stats?.bestScore !== undefined ? `${stats.bestScore}%` : DASH}
-              hint="Eng yuqori natijangiz"
+              hint="Barcha urinishlar bo'yicha"
             />
             <StatCard
               icon={ClipboardCheck}
-              tone="emerald"
+              tone="blue"
               label="Muvaffaqiyatli imtihonlar"
               value={`${stats?.passedAttempts ?? 0} / ${stats?.completedAttempts ?? 0}`}
               hint="O'tgan / yakunlangan"
+            />
+            <StatCard
+              icon={Award}
+              tone="violet"
+              label="Sertifikatlar"
+              value={stats?.certificatesCount ?? 0}
+              hint="Berilgan sertifikatlar soni"
             />
             <StatCard
               icon={TrendingUp}
@@ -150,11 +157,30 @@ export function DashboardPage() {
                         : DASH}
                     </dd>
                   </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">Sertifikat</dt>
+                    <dd className="text-right">
+                      {stats?.latestCertificate ? (
+                        <span className="font-mono text-xs font-medium">
+                          {stats.latestCertificate.certificateId}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">Mavjud emas</span>
+                      )}
+                    </dd>
+                  </div>
                 </dl>
 
-                <Button asChild variant="outline" size="sm" className="w-full">
-                  <Link to={ROUTES.profile}>Profilni tahrirlash</Link>
-                </Button>
+                <div className="grid gap-2">
+                  {stats?.latestCertificate && (
+                    <Button asChild variant="outline" size="sm">
+                      <Link to={ROUTES.certificates}>Sertifikatni yuklab olish</Link>
+                    </Button>
+                  )}
+                  <Button asChild variant="outline" size="sm">
+                    <Link to={ROUTES.profile}>Profilni tahrirlash</Link>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

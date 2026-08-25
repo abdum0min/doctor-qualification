@@ -43,7 +43,8 @@ model DoctorProfile {
   workplace       String? @db.VarChar(160)
   experienceYears Int?
 
-  attempts ExamAttempt[]
+  attempts     ExamAttempt[]
+  certificates Certificate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -172,7 +173,8 @@ model ExamAttempt {
   qualification QualificationLevel?
   passed        Boolean?
 
-  questions AttemptQuestion[]
+  questions   AttemptQuestion[]
+  certificate Certificate?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -221,4 +223,41 @@ model AttemptOption {
   selectedBy AttemptQuestion? @relation("SelectedOption")
 
   @@unique([attemptQuestionId, position])
+}
+
+enum CertificateStatus {
+  ACTIVE
+  REVOKED
+}
+
+/// Sertifikat mazmuni berilgan paytda nusxalanadi — shifokor profili yoki
+/// imtihon nomi keyin o'zgarsa ham berilgan hujjat o'zgarmaydi.
+model Certificate {
+  id            Int    @id @default(autoincrement())
+  /// Ommaviy tekshiruv identifikatori: DOC-2026-000123
+  certificateId String @unique @db.VarChar(32)
+
+  attemptId Int         @unique
+  attempt   ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Restrict)
+
+  doctorProfileId Int
+  doctorProfile   DoctorProfile @relation(fields: [doctorProfileId], references: [id], onDelete: Restrict)
+
+  doctorFullname String             @db.VarChar(100)
+  specialtyName  String             @db.VarChar(100)
+  examTitle      String             @db.VarChar(160)
+  score          Int
+  qualification  QualificationLevel
+
+  status        CertificateStatus @default(ACTIVE)
+  issuedAt      DateTime          @default(now())
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  revokedReason String?           @db.VarChar(300)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([doctorProfileId, issuedAt])
+  @@index([status])
 }

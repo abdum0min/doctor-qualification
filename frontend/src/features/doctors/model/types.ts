@@ -1,4 +1,5 @@
 import type { QualificationLevel } from '@/features/attempts'
+import type { CertificateStatus } from '@/features/certificates'
 
 export interface DoctorSpecialty {
   id: number
@@ -28,6 +29,13 @@ export interface DoctorLatestAttempt {
   completedAt: string | null
 }
 
+export interface DoctorCertificateSummary {
+  certificateId: string
+  status: CertificateStatus
+  issuedAt: string
+  expiresAt: string
+}
+
 export interface DoctorStats {
   totalAttempts: number
   completedAttempts: number
@@ -36,6 +44,8 @@ export interface DoctorStats {
   averageScore: number | null
   currentQualification: QualificationLevel | null
   latestAttempt: DoctorLatestAttempt | null
+  certificatesCount: number
+  latestCertificate: DoctorCertificateSummary | null
 }
 
 export interface DoctorOverview {

@@ -8,6 +8,7 @@ export { doctorProfileSchema } from './model/schemas'
 export { toProfilePayload } from './model/schemas'
 export type { DoctorProfilePayload, DoctorProfileValues } from './model/schemas'
 export type {
+  DoctorCertificateSummary,
   DoctorLatestAttempt,
   DoctorOverview,
   DoctorProfile,
