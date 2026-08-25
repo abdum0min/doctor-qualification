@@ -17,8 +17,8 @@ frontend/   React 19 + Vite + Tailwind v4 + shadcn/ui
 
 | Rol | Imkoniyatlar |
 | --- | --- |
-| **Shifokor** | Ro'yxatdan o'tish, profil va mutaxassislik, imtihon topshirish (taymer, avtosaqlash, davom ettirish), natija va javoblar tahlili, urinishlar tarixi, sertifikat va uni PDF sifatida yuklab olish |
-| **Administrator** | Statistika paneli, shifokorlar boshqaruvi, mutaxassisliklar, savollar bazasi, imtihon sozlamalari, natijalar, sertifikatlarni bekor qilish |
+| **Shifokor** | Ro'yxatdan o'tish, profil va mutaxassislik, imtihon topshirish (taymer, avtosaqlash, davom ettirish), natijalarim sahifasi va javoblar tahlili, shifokorlar reytingidagi o'rni, sertifikat va uni PDF sifatida yuklab olish |
+| **Administrator** | Statistika paneli, shifokorlar boshqaruvi, mutaxassisliklar, imtihonlar va ularning savollari, natijalar, reyting, sertifikatlarni yuklab olish va bekor qilish |
 | **Ochiq (auth talab qilinmaydi)** | Bosh sahifa, mutaxassisliklar va imtihonlar ro'yxati, platforma statistikasi, sertifikatni tekshirish |
 
 ## Muhim qoidalar
@@ -35,6 +35,10 @@ tashqariga chiqara olmaydi. Javoblar faqat urinish yakunlangandan keyin ochiladi
 sozlama qiymatlari (savollar soni, vaqt, o'tish bali) nusxalanadi. Savol keyin
 tahrirlansa yoki o'chirilsa ham eski natija va uning tahlili o'zgarmaydi.
 
+**Savollar imtihonga tegishli.** Ierarxiya: `Mutaxassislik → Imtihon → Savol → Variant`.
+Admin imtihonni yaratadi, so'ng uning ichiga savollarni biriktiradi; har bir urinishda
+shu to'plamdan belgilangan miqdori tasodifiy tanlanadi.
+
 **Malaka darajasi bitta joyda belgilanadi** — `backend/src/domain/qualification.ts`:
 
 | Natija | Daraja |
@@ -44,6 +48,10 @@ tahrirlansa yoki o'chirilsa ham eski natija va uning tahlili o'zgarmaydi.
 | 70–84% | Yaxshi |
 | 85–94% | Yuqori |
 | 95–100% | Ekspert |
+
+**Reyting bali** — `backend/src/domain/ranking.ts`: o'rtacha natija (50%),
+eng yuqori natija (20%), urinishlar hajmi (20%) va o'tish ulushi (10%)
+vaznli o'rtachasi. Faqat o'rtacha ball bilan tartiblash adolatsiz bo'lardi.
 
 ---
 
@@ -77,12 +85,17 @@ Ilova: `http://localhost:5173`
 
 ### Demo hisoblar
 
-Seed quyidagi hisoblarni yaratadi (faqat lokal ishlash uchun):
+Seed mutaxassisliklar, imtihonlar va ularning savollarini, shuningdek natijalar,
+reyting va sertifikatlar bo'sh ko'rinmasligi uchun demo shifokorlarni tugallangan
+urinishlari bilan yaratadi.
+
+Quyidagi hisoblar tayyor turadi (faqat lokal ishlash uchun):
 
 | Rol | Email | Parol |
 | --- | --- | --- |
 | ADMIN | `admin@doctorqualification.uz` | `Admin123` |
 | DOCTOR | `doctor@doctorqualification.uz` | `Doctor123` |
+| DOCTOR | `nilufar.karimova@doctorqualification.uz` | `Doctor123` |
 
 > **Diqqat:** seed ichidagi savollar — faqat platformani sinab ko'rish uchun
 > yaratilgan **namuna** kontent. Ular rasmiy klinik ko'rsatmalar yoki attestatsiya
@@ -120,13 +133,17 @@ npx tsc -b && npm run lint && npm run build
 ## API bo'limlari
 
 ```
-/auth            ro'yxatdan o'tish, kirish, joriy foydalanuvchi
-/doctors         shifokor profili va boshqaruv paneli xulosasi
-/specialties     mutaxassisliklar (ochiq ro'yxat + admin CRUD)
-/questions       savollar bazasi (faqat admin)
-/exams           imtihon sozlamalari (ochiq ro'yxat + admin CRUD)
-/attempts        imtihon urinishlari (faqat shifokorning o'ziniki)
-/certificates    sertifikatlar, PDF yuklab olish, ochiq tekshirish
-/statistics      ochiq va admin statistikasi
-/admin/*         shifokorlar va natijalar boshqaruvi
+/auth                            ro'yxatdan o'tish, kirish, joriy foydalanuvchi
+/doctors                         shifokor profili va boshqaruv paneli xulosasi
+/specialties                     mutaxassisliklar (ochiq ro'yxat + admin CRUD)
+/exams                           imtihon sozlamalari (ochiq ro'yxat + admin CRUD)
+/admin/exams/:id/questions       imtihon savollari (faqat admin)
+/attempts                        imtihon urinishlari (faqat shifokorning o'ziniki)
+/certificates                    sertifikatlar, PDF yuklab olish, ochiq tekshirish
+/rankings                        shifokorlar reytingi (filtrlar bilan)
+/statistics                      ochiq va admin statistikasi
+/admin/doctors, /admin/attempts  shifokorlar va natijalar boshqaruvi
 ```
+
+Barcha ro'yxatlar bir xil sahifalash konvertini qaytaradi:
+`meta: { page, limit, total, totalPages }`.
