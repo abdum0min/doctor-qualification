@@ -1,6 +1,5 @@
 import {
   LayoutDashboard,
-  Palette,
   ClipboardList,
   Award,
   BarChart3,
@@ -39,7 +38,6 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.adminAttempts, label: 'Natijalar', icon: BarChart3 },
   { to: ROUTES.adminRankings, label: 'Reyting', icon: Trophy },
   { to: ROUTES.adminCertificates, label: 'Sertifikatlar', icon: Award },
-  { to: ROUTES.designSystem, label: 'Design System', icon: Palette },
 ]
 
 export function navItemsForRole(role: UserRole | undefined): NavItem[] {
