@@ -11,6 +11,7 @@ export const ROUTES = {
   dashboard: '/dashboard',
   exams: '/exams',
   attempt: '/attempts/:attemptId',
+  results: '/results',
   ranking: '/ranking',
   certificates: '/certificates',
   profile: '/profile',

@@ -19,6 +19,7 @@ import { LoginPage } from '@/pages/login-page'
 import { NotFoundPage } from '@/pages/not-found-page'
 import { ProfilePage } from '@/pages/profile-page'
 import { RankingPage } from '@/pages/ranking-page'
+import { ResultsPage } from '@/pages/results-page'
 import { RegisterPage } from '@/pages/register-page'
 import { VerifyPage } from '@/pages/verify-page'
 import { ROUTES } from '@/shared/config'
@@ -63,6 +64,7 @@ export function AppRouter() {
             <Route path={ROUTES.dashboard} element={<DashboardPage />} />
             <Route path={ROUTES.exams} element={<ExamsPage />} />
             <Route path={ROUTES.attempt} element={<AttemptPage />} />
+            <Route path={ROUTES.results} element={<ResultsPage />} />
             <Route path={ROUTES.ranking} element={<RankingPage />} />
             <Route path={ROUTES.certificates} element={<CertificatesPage />} />
             <Route path={ROUTES.profile} element={<ProfilePage />} />

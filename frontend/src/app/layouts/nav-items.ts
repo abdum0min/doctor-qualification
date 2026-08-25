@@ -6,6 +6,7 @@ import {
   BarChart3,
   GraduationCap,
   Stethoscope,
+  ClipboardList as ResultsIcon,
   Trophy,
   User,
   Users,
@@ -24,6 +25,7 @@ export interface NavItem {
 const DOCTOR_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.dashboard, label: 'Boshqaruv paneli', icon: LayoutDashboard },
   { to: ROUTES.exams, label: 'Imtihonlar', icon: GraduationCap },
+  { to: ROUTES.results, label: 'Natijalarim', icon: ResultsIcon },
   { to: ROUTES.ranking, label: 'Reyting', icon: Trophy },
   { to: ROUTES.certificates, label: 'Sertifikatlar', icon: Award },
   { to: ROUTES.profile, label: 'Profil', icon: User },

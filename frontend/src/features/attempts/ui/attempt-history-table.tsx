@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 
 import type { ApiError } from '@/shared/api'
@@ -10,7 +11,7 @@ import { Button } from '@/shared/ui/button'
 import { DataTable, type Column } from '@/shared/ui/data-table'
 import { TablePagination } from '@/shared/ui/table-pagination'
 import { useAttemptHistory } from '../api/attempts-queries'
-import type { AttemptSummary } from '../model/types'
+import type { AttemptStatus, AttemptSummary } from '../model/types'
 import { QualificationBadge } from './qualification-badge'
 
 const STATUS_LABELS: Record<AttemptSummary['status'], string> = {
@@ -91,9 +92,23 @@ const columns: Column<AttemptSummary>[] = [
   },
 ]
 
-export function AttemptHistoryTable({ limit = 10 }: { limit?: number }) {
+interface AttemptHistoryTableProps {
+  limit?: number
+  /** Imtihon yoki holat bo'yicha cheklov — "Natijalarim" sahifasi uzatadi. */
+  filters?: { examId?: number; status?: AttemptStatus }
+}
+
+export function AttemptHistoryTable({
+  limit = 10,
+  filters,
+}: AttemptHistoryTableProps) {
   const table = useTableQuery(limit)
-  const { data, isLoading, isError, error } = useAttemptHistory(table.params)
+  const params = useMemo(
+    () => ({ ...table.params, ...filters }),
+    [table.params, filters],
+  )
+
+  const { data, isLoading, isError, error } = useAttemptHistory(params)
 
   return (
     <div className="space-y-4">
