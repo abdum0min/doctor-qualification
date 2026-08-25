@@ -1,0 +1,32 @@
+// Starter template schema.
+// Bu yerda faqat auth uchun kerak bo'ladigan User modeli turadi.
+// Har bir yangi loyihada domenga xos modellarni shu faylga qo'shib boring.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+model User {
+  id       Int      @id @default(autoincrement())
+  fullname String   @db.VarChar(100)
+  email    String   @unique @db.VarChar(255)
+  password String
+  role     UserRole @default(USER)
+  isActive Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+}
