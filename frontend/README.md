@@ -1,11 +1,13 @@
-# Frontend Starter — React + Vite + Tailwind v4 + shadcn/ui
+# Doctor Qualification — Frontend
 
-Yangi loyihalarni noldan boshlamaslik uchun tayyor **template**. Ichida auth oqimi,
-API qatlami, theme, route guard'lar va to'liq dizayn tizimi bor. Biznes ekranlari **yo'q**.
+React 19 + Vite + Tailwind v4 + shadcn/ui. Shifokor kabineti, imtihon interfeysi,
+administrator paneli va ochiq sahifalar (bosh sahifa hamda sertifikatni tekshirish).
+
+Loyiha haqida umumiy ma'lumot uchun ildizdagi [`README.md`](../README.md) ga qarang.
 
 ---
 
-## Nima tayyor
+## Infratuzilma
 
 | Qism | Tafsilot |
 | --- | --- |

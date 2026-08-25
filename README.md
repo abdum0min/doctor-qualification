@@ -1,0 +1,132 @@
+# Doctor Qualification
+
+Shifokorlarning kasbiy bilimi va malaka darajasini onlayn testlar orqali baholovchi
+platforma. Shifokor mutaxassisligini tanlaydi, imtihon topshiradi, natijasiga qarab
+malaka darajasini oladi va muvaffaqiyatli natijada elektron sertifikat beriladi.
+Sertifikat haqiqiyligini Certificate ID yoki QR kod orqali istalgan kishi — tizimga
+kirmasdan — tekshirishi mumkin.
+
+```
+backend/    NestJS 11 + Prisma 7 + PostgreSQL (Neon)
+frontend/   React 19 + Vite + Tailwind v4 + shadcn/ui
+```
+
+---
+
+## Asosiy imkoniyatlar
+
+| Rol | Imkoniyatlar |
+| --- | --- |
+| **Shifokor** | Ro'yxatdan o'tish, profil va mutaxassislik, imtihon topshirish (taymer, avtosaqlash, davom ettirish), natija va javoblar tahlili, urinishlar tarixi, sertifikat va uni PDF sifatida yuklab olish |
+| **Administrator** | Statistika paneli, shifokorlar boshqaruvi, mutaxassisliklar, savollar bazasi, imtihon sozlamalari, natijalar, sertifikatlarni bekor qilish |
+| **Ochiq (auth talab qilinmaydi)** | Bosh sahifa, mutaxassisliklar va imtihonlar ro'yxati, platforma statistikasi, sertifikatni tekshirish |
+
+## Muhim qoidalar
+
+**Natija faqat serverda hisoblanadi.** Mijoz yuborgan `score`, `passed`,
+`correctCount` yoki `qualification` hech qachon qabul qilinmaydi — `AttemptEvaluator`
+natijani urinish nusxasidagi ma'lumotdan chiqaradi.
+
+**To'g'ri javob imtihon davomida yuborilmaydi.** `isCorrect` ustuni Prisma darajasida
+global `omit` bilan yopilgan, shuning uchun e'tibordan chetda qolgan `include` ham uni
+tashqariga chiqara olmaydi. Javoblar faqat urinish yakunlangandan keyin ochiladi.
+
+**Tarixiy natija o'zgarmaydi.** Urinish boshlanganda savol matni, variantlari va
+sozlama qiymatlari (savollar soni, vaqt, o'tish bali) nusxalanadi. Savol keyin
+tahrirlansa yoki o'chirilsa ham eski natija va uning tahlili o'zgarmaydi.
+
+**Malaka darajasi bitta joyda belgilanadi** — `backend/src/domain/qualification.ts`:
+
+| Natija | Daraja |
+| --- | --- |
+| 0–49% | Boshlang'ich |
+| 50–69% | O'rta |
+| 70–84% | Yaxshi |
+| 85–94% | Yuqori |
+| 95–100% | Ekspert |
+
+---
+
+## Ishga tushirish
+
+Talab: Node.js 20+ va Neon (yoki boshqa cloud) PostgreSQL bazasi.
+
+### 1. Backend
+
+```bash
+cd backend
+npm install
+cp .env.example .env      # DATABASE_URL, DIRECT_URL, JWT_SECRET to'ldiriladi
+npm run db:deploy         # migratsiyalarni qo'llash
+npm run db:seed           # demo ma'lumotlar
+npm run start:dev
+```
+
+API: `http://localhost:3000/api` · Swagger: `http://localhost:3000/api/docs`
+
+### 2. Frontend
+
+```bash
+cd frontend
+npm install
+cp .env.example .env      # VITE_API_URL
+npm run dev
+```
+
+Ilova: `http://localhost:5173`
+
+### Demo hisoblar
+
+Seed quyidagi hisoblarni yaratadi (faqat lokal ishlash uchun):
+
+| Rol | Email | Parol |
+| --- | --- | --- |
+| ADMIN | `admin@doctorqualification.uz` | `Admin123` |
+| DOCTOR | `doctor@doctorqualification.uz` | `Doctor123` |
+
+> **Diqqat:** seed ichidagi savollar — faqat platformani sinab ko'rish uchun
+> yaratilgan **namuna** kontent. Ular rasmiy klinik ko'rsatmalar yoki attestatsiya
+> savollari emas va tibbiy qaror uchun asos bo'la olmaydi.
+
+---
+
+## Environment
+
+| O'zgaruvchi | Tavsif |
+| --- | --- |
+| `DATABASE_URL` | Runtime uchun **pooled** ulanish (Neon'da host nomida `-pooler`) |
+| `DIRECT_URL` | Migratsiya va seed uchun to'g'ridan-to'g'ri ulanish |
+| `JWT_SECRET` | Kamida 32 belgi |
+| `CORS_ORIGIN` | Vergul bilan ajratilgan ro'yxat |
+| `PUBLIC_APP_URL` | Sertifikat QR kodi shu manzilga ishora qiladi |
+| `VITE_API_URL` | Frontend uchun backend manzili |
+
+`.env` git'ga tushmaydi. Yangi o'zgaruvchi qo'shsangiz avval
+`backend/src/config/env.validation.ts` ga, keyin `.env.example` ga qo'shing —
+noto'g'ri konfiguratsiyada ilova umuman ko'tarilmaydi.
+
+---
+
+## Tekshiruv
+
+```bash
+# backend
+npm run typecheck && npm run lint && npm test && npm run build
+
+# frontend
+npx tsc -b && npm run lint && npm run build
+```
+
+## API bo'limlari
+
+```
+/auth            ro'yxatdan o'tish, kirish, joriy foydalanuvchi
+/doctors         shifokor profili va boshqaruv paneli xulosasi
+/specialties     mutaxassisliklar (ochiq ro'yxat + admin CRUD)
+/questions       savollar bazasi (faqat admin)
+/exams           imtihon sozlamalari (ochiq ro'yxat + admin CRUD)
+/attempts        imtihon urinishlari (faqat shifokorning o'ziniki)
+/certificates    sertifikatlar, PDF yuklab olish, ochiq tekshirish
+/statistics      ochiq va admin statistikasi
+/admin/*         shifokorlar va natijalar boshqaruvi
+```

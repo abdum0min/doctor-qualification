@@ -1,14 +1,14 @@
-# Backend Starter — NestJS + Prisma + PostgreSQL
+# Doctor Qualification — Backend
 
-Yangi loyihalarni noldan boshlamaslik uchun tayyor **template**. Ichida faqat
-har bir loyihada baribir kerak bo'ladigan narsalar bor: auth, global javob/xato
-formati, Prisma (cloud Postgres), Swagger, rate limit, health check.
+NestJS 11 + Prisma 7 + PostgreSQL (Neon). Shifokorlarning malakasini baholovchi
+platformaning API qismi: autentifikatsiya, savol bazasi, imtihon dvigateli,
+server tomonidagi baholash va sertifikat (PDF + QR) generatsiyasi.
 
-Biznes logikasi **yo'q** — uni har bir loyihada `src/modules/` ichiga qo'shasiz.
+Loyiha haqida umumiy ma'lumot uchun ildizdagi [`README.md`](../README.md) ga qarang.
 
 ---
 
-## Nima tayyor
+## Infratuzilma
 
 | Qism | Tafsilot |
 | --- | --- |
