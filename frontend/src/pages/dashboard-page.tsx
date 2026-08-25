@@ -1,4 +1,4 @@
-import { Mail, Phone, Briefcase, CalendarClock } from 'lucide-react'
+import { Briefcase, CalendarClock, Mail, Phone, Stethoscope } from 'lucide-react'
 
 import { useCurrentUser } from '@/features/auth'
 import { useDoctorProfile } from '@/features/doctors'
@@ -14,6 +14,7 @@ export function DashboardPage() {
 
   const details = [
     { icon: Mail, label: 'Email', value: profile?.email },
+    { icon: Stethoscope, label: 'Mutaxassislik', value: profile?.specialty?.name },
     { icon: Phone, label: 'Telefon', value: profile?.phone },
     { icon: Briefcase, label: 'Ish joyi', value: profile?.workplace },
     {

@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 
+import { SpecialtySelect } from '@/features/specialties'
 import { Button } from '@/shared/ui/button'
 import { FormField } from '@/shared/ui/form-field'
 import { Input } from '@/shared/ui/input'
@@ -18,12 +19,14 @@ export function DoctorProfileForm({ profile }: { profile: DoctorProfile }) {
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isDirty },
   } = useForm<DoctorProfileValues>({
     resolver: zodResolver(doctorProfileSchema),
     defaultValues: {
       fullname: profile.fullname,
+      specialtyId: profile.specialty?.id ?? null,
       phone: profile.phone ?? '',
       workplace: profile.workplace ?? '',
       experienceYears: profile.experienceYears?.toString() ?? '',
@@ -41,6 +44,27 @@ export function DoctorProfileForm({ profile }: { profile: DoctorProfile }) {
           autoComplete="name"
           aria-invalid={Boolean(errors.fullname)}
           {...register('fullname')}
+        />
+      </FormField>
+
+      <FormField
+        id="specialtyId"
+        label="Mutaxassislik"
+        error={errors.specialtyId?.message}
+        hint="Imtihonlar shu yo'nalish bo'yicha taklif qilinadi"
+      >
+        <Controller
+          control={control}
+          name="specialtyId"
+          render={({ field }) => (
+            <SpecialtySelect
+              id="specialtyId"
+              clearable
+              value={field.value}
+              onChange={field.onChange}
+              aria-invalid={Boolean(errors.specialtyId)}
+            />
+          )}
         />
       </FormField>
 

@@ -12,5 +12,10 @@ export const ENDPOINTS = {
   doctors: {
     me: '/doctors/me',
   },
+  specialties: {
+    root: '/specialties',
+    all: '/specialties/all',
+    byId: (id: number) => `/specialties/${id}`,
+  },
   health: '/health',
 } as const

@@ -3,6 +3,7 @@ import { Transform } from 'class-transformer';
 import {
   IsInt,
   IsOptional,
+  IsPositive,
   IsString,
   Matches,
   Max,
@@ -27,6 +28,12 @@ export class UpdateDoctorProfileDto {
   @Transform(trim)
   fullname?: string;
 
+  @ApiPropertyOptional({ example: 3, nullable: true })
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  specialtyId?: number | null;
+
   @ApiPropertyOptional({ example: '+998901234567', nullable: true })
   @IsOptional()
   @IsString()
@@ -35,7 +42,10 @@ export class UpdateDoctorProfileDto {
   @Transform(trim)
   phone?: string | null;
 
-  @ApiPropertyOptional({ example: '1-sonli shahar shifoxonasi', nullable: true })
+  @ApiPropertyOptional({
+    example: '1-sonli shahar shifoxonasi',
+    nullable: true,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(160)

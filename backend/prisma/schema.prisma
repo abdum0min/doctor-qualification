@@ -36,10 +36,30 @@ model DoctorProfile {
   userId Int  @unique
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  specialtyId Int?
+  specialty   Specialty? @relation(fields: [specialtyId], references: [id], onDelete: SetNull)
+
   phone           String? @db.VarChar(32)
   workplace       String? @db.VarChar(160)
   experienceYears Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([specialtyId])
+}
+
+/// Mutaxassislik — savol bazasi va imtihonlar shu bo'yicha ajratiladi.
+model Specialty {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique @db.VarChar(100)
+  description String? @db.VarChar(300)
+  isActive    Boolean @default(true)
+
+  doctorProfiles DoctorProfile[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, name])
 }

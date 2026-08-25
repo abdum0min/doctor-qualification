@@ -15,6 +15,19 @@ const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString }),
 });
 
+const SPECIALTIES = [
+  { name: 'Terapevt', description: 'Ichki kasalliklar bo`yicha umumiy amaliyot' },
+  { name: 'Kardiolog', description: 'Yurak va qon tomir kasalliklari' },
+  { name: 'Nevrolog', description: 'Asab tizimi kasalliklari' },
+  { name: 'Jarroh', description: 'Umumiy jarrohlik amaliyoti' },
+  { name: 'Pediatr', description: 'Bolalar salomatligi va rivojlanishi' },
+  { name: 'Stomatolog', description: 'Og`iz bo`shlig`i va tish kasalliklari' },
+  { name: 'Dermatolog', description: 'Teri kasalliklari' },
+  { name: 'Ginekolog', description: 'Ayollar reproduktiv salomatligi' },
+  { name: 'Urolog', description: 'Siydik-tanosil tizimi kasalliklari' },
+  { name: 'Boshqa', description: 'Ro`yxatda keltirilmagan yo`nalishlar' },
+];
+
 const ACCOUNTS = [
   {
     fullname: 'Platforma administratori',
@@ -27,6 +40,7 @@ const ACCOUNTS = [
     email: 'doctor@doctorqualification.uz',
     password: 'Doctor123',
     role: UserRole.DOCTOR,
+    specialtyName: 'Kardiolog',
     profile: {
       phone: '+998901234567',
       workplace: '1-sonli shahar klinik shifoxonasi',
@@ -35,9 +49,26 @@ const ACCOUNTS = [
   },
 ];
 
+async function seedSpecialties(): Promise<void> {
+  for (const specialty of SPECIALTIES) {
+    await prisma.specialty.upsert({
+      where: { name: specialty.name },
+      update: { description: specialty.description },
+      create: specialty,
+    });
+  }
+}
+
 async function seedAccounts(): Promise<void> {
   for (const account of ACCOUNTS) {
     const password = await bcrypt.hash(account.password, SALT_ROUNDS);
+    const specialty = account.specialtyName
+      ? await prisma.specialty.findUnique({ where: { name: account.specialtyName } })
+      : null;
+
+    const profile = account.profile
+      ? { ...account.profile, specialtyId: specialty?.id ?? null }
+      : null;
 
     await prisma.user.upsert({
       where: { email: account.email },
@@ -47,9 +78,7 @@ async function seedAccounts(): Promise<void> {
         email: account.email,
         password,
         role: account.role,
-        ...(account.profile
-          ? { doctorProfile: { create: account.profile } }
-          : {}),
+        ...(profile ? { doctorProfile: { create: profile } } : {}),
       },
     });
   }
@@ -60,6 +89,7 @@ async function main(): Promise<void> {
     throw new Error('DATABASE_URL (yoki DIRECT_URL) .env faylda topilmadi');
   }
 
+  await seedSpecialties();
   await seedAccounts();
 
   console.log('✅ Seed tugadi');

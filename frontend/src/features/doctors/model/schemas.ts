@@ -13,6 +13,7 @@ export const doctorProfileSchema = z.object({
     .trim()
     .max(32, 'Ko`pi bilan 32 ta belgi')
     .refine((value) => !value || PHONE_PATTERN.test(value), 'Telefon raqami noto`g`ri'),
+  specialtyId: z.number().int().positive().nullable(),
   workplace: z.string().trim().max(160, 'Ko`pi bilan 160 ta belgi'),
   experienceYears: z
     .string()
@@ -27,6 +28,7 @@ export type DoctorProfileValues = z.infer<typeof doctorProfileSchema>
 
 export interface DoctorProfilePayload {
   fullname: string
+  specialtyId: number | null
   phone: string | null
   workplace: string | null
   experienceYears: number | null
@@ -36,6 +38,7 @@ export interface DoctorProfilePayload {
 export function toProfilePayload(values: DoctorProfileValues): DoctorProfilePayload {
   return {
     fullname: values.fullname,
+    specialtyId: values.specialtyId,
     phone: values.phone || null,
     workplace: values.workplace || null,
     experienceYears: values.experienceYears ? Number(values.experienceYears) : null,

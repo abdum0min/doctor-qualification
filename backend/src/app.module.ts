@@ -16,6 +16,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { DoctorsModule } from './modules/doctors/doctors.module';
 import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
+import { SpecialtiesModule } from './modules/specialties/specialties.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { PrismaModule } from './modules/prisma/prisma.module';
     HealthModule,
     AuthModule,
     DoctorsModule,
+    SpecialtiesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
