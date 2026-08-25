@@ -159,7 +159,9 @@ function buildWhere(query: QuestionQueryDto): Prisma.QuestionWhereInput {
   return {
     ...(query.specialtyId ? { specialtyId: query.specialtyId } : {}),
     ...(query.difficulty ? { difficulty: query.difficulty } : {}),
-    ...(query.status ? { isActive: query.status === QuestionStatus.Active } : {}),
+    ...(query.status
+      ? { isActive: query.status === QuestionStatus.Active }
+      : {}),
     ...(query.search
       ? { text: { contains: query.search, mode: 'insensitive' as const } }
       : {}),

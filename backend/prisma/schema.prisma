@@ -58,6 +58,7 @@ model Specialty {
 
   doctorProfiles DoctorProfile[]
   questions      Question[]
+  exams          Exam[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -100,4 +101,28 @@ model QuestionOption {
   position   Int
 
   @@unique([questionId, position])
+}
+
+/// Imtihon konfiguratsiyasi. Savollar har bir urinishda shu sozlama asosida
+/// bazadan tanlanadi — imtihonga qat'iy savollar biriktirilmaydi.
+model Exam {
+  id          Int     @id @default(autoincrement())
+  specialtyId Int
+  specialty   Specialty @relation(fields: [specialtyId], references: [id], onDelete: Restrict)
+
+  title       String  @db.VarChar(160)
+  description String? @db.VarChar(500)
+
+  questionCount    Int
+  timeLimitMinutes Int
+  passingScore     Int
+  /// `null` — barcha darajalardagi savollar aralash tanlanadi.
+  difficulty       Difficulty?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([specialtyId, isActive])
 }

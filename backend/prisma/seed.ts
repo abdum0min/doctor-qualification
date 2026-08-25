@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 
 import { PrismaClient } from '../src/generated/prisma/client';
 import { UserRole } from '../src/generated/prisma/enums';
+import { DEMO_EXAMS } from './seed-data/demo-exams';
 import { DEMO_QUESTIONS } from './seed-data/demo-questions';
 
 const SALT_ROUNDS = 10;
@@ -109,6 +110,61 @@ async function seedQuestions(): Promise<number> {
   return created;
 }
 
+async function seedExams(): Promise<number> {
+  let created = 0;
+
+  for (const exam of DEMO_EXAMS) {
+    const specialty = await prisma.specialty.findUnique({
+      where: { name: exam.specialtyName },
+      select: { id: true },
+    });
+
+    if (!specialty) {
+      continue;
+    }
+
+    const available = await prisma.question.count({
+      where: {
+        specialtyId: specialty.id,
+        isActive: true,
+        ...(exam.difficulty ? { difficulty: exam.difficulty } : {}),
+      },
+    });
+
+    // Demo savol bazasi kichik — sozlama savollar soniga moslashtiriladi.
+    const questionCount = Math.min(exam.questionCount, available);
+
+    if (questionCount < 1) {
+      continue;
+    }
+
+    const exists = await prisma.exam.findFirst({
+      where: { specialtyId: specialty.id, title: exam.title },
+      select: { id: true },
+    });
+
+    if (exists) {
+      continue;
+    }
+
+    await prisma.exam.create({
+      data: {
+        specialtyId: specialty.id,
+        title: exam.title,
+        description: exam.description,
+        questionCount,
+        timeLimitMinutes: exam.timeLimitMinutes,
+        passingScore: exam.passingScore,
+        difficulty: exam.difficulty,
+      },
+    });
+
+    created += 1;
+  }
+
+  return created;
+}
+
 async function seedAccounts(): Promise<void> {
   for (const account of ACCOUNTS) {
     const password = await bcrypt.hash(account.password, SALT_ROUNDS);
@@ -141,10 +197,12 @@ async function main(): Promise<void> {
 
   await seedSpecialties();
   const newQuestions = await seedQuestions();
+  const newExams = await seedExams();
   await seedAccounts();
 
   console.log('✅ Seed tugadi');
   console.log(`   Yangi demo savollar: ${newQuestions}`);
+  console.log(`   Yangi demo imtihonlar: ${newExams}`);
   for (const account of ACCOUNTS) {
     console.log(`   ${account.role.padEnd(6)} ${account.email} / ${account.password}`);
   }

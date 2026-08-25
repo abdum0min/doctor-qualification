@@ -12,6 +12,7 @@ export const ROUTES = {
   admin: '/admin',
   adminSpecialties: '/admin/specialties',
   adminQuestions: '/admin/questions',
+  adminExams: '/admin/exams',
   designSystem: '/design-system',
 } as const
 

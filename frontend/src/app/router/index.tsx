@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 
 import {
   AdminDashboardPage,
+  AdminExamsPage,
   AdminQuestionsPage,
   AdminSpecialtiesPage,
 } from '@/pages/admin'
@@ -60,6 +61,7 @@ export function AppRouter() {
             <Route path={ROUTES.admin} element={<AdminDashboardPage />} />
             <Route path={ROUTES.adminSpecialties} element={<AdminSpecialtiesPage />} />
             <Route path={ROUTES.adminQuestions} element={<AdminQuestionsPage />} />
+            <Route path={ROUTES.adminExams} element={<AdminExamsPage />} />
             <Route
               path={ROUTES.designSystem}
               element={
