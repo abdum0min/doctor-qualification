@@ -21,6 +21,7 @@ import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 import { QuestionsModule } from './modules/questions/questions.module';
 import { SpecialtiesModule } from './modules/specialties/specialties.module';
+import { StatisticsModule } from './modules/statistics/statistics.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { SpecialtiesModule } from './modules/specialties/specialties.module';
     ExamsModule,
     AttemptsModule,
     CertificatesModule,
+    StatisticsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

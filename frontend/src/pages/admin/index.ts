@@ -1,5 +1,7 @@
+export { AdminAttemptsPage } from './admin-attempts-page'
 export { AdminCertificatesPage } from './admin-certificates-page'
 export { AdminDashboardPage } from './admin-dashboard-page'
+export { AdminDoctorsPage } from './admin-doctors-page'
 export { AdminExamsPage } from './admin-exams-page'
 export { AdminQuestionsPage } from './admin-questions-page'
 export { AdminSpecialtiesPage } from './admin-specialties-page'

@@ -3,10 +3,12 @@ import {
   Palette,
   ClipboardList,
   Award,
+  BarChart3,
   GraduationCap,
   FileQuestion,
   Stethoscope,
   User,
+  Users,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -28,9 +30,11 @@ const DOCTOR_NAV_ITEMS: NavItem[] = [
 
 const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.admin, label: 'Boshqaruv paneli', icon: LayoutDashboard },
+  { to: ROUTES.adminDoctors, label: 'Shifokorlar', icon: Users },
   { to: ROUTES.adminSpecialties, label: 'Mutaxassisliklar', icon: Stethoscope },
   { to: ROUTES.adminQuestions, label: 'Savollar', icon: FileQuestion },
   { to: ROUTES.adminExams, label: 'Imtihonlar', icon: ClipboardList },
+  { to: ROUTES.adminAttempts, label: 'Natijalar', icon: BarChart3 },
   { to: ROUTES.adminCertificates, label: 'Sertifikatlar', icon: Award },
   { to: ROUTES.designSystem, label: 'Design System', icon: Palette },
 ]

@@ -40,5 +40,17 @@ export const ENDPOINTS = {
     verify: (certificateId: string) => `/certificates/verify/${certificateId}`,
     download: (certificateId: string) => `/certificates/${certificateId}/download`,
   },
+  statistics: {
+    overview: '/statistics/overview',
+    specialties: '/statistics/specialties',
+    public: '/statistics/public',
+  },
+  admin: {
+    doctors: '/admin/doctors',
+    doctorById: (id: number) => `/admin/doctors/${id}`,
+    doctorStatus: (id: number) => `/admin/doctors/${id}/status`,
+    attempts: '/admin/attempts',
+    attemptById: (id: number) => `/admin/attempts/${id}`,
+  },
   health: '/health',
 } as const

@@ -2,8 +2,10 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 
 import {
+  AdminAttemptsPage,
   AdminCertificatesPage,
   AdminDashboardPage,
+  AdminDoctorsPage,
   AdminExamsPage,
   AdminQuestionsPage,
   AdminSpecialtiesPage,
@@ -72,9 +74,11 @@ export function AppRouter() {
 
           <Route element={<AdminRoute />}>
             <Route path={ROUTES.admin} element={<AdminDashboardPage />} />
+            <Route path={ROUTES.adminDoctors} element={<AdminDoctorsPage />} />
             <Route path={ROUTES.adminSpecialties} element={<AdminSpecialtiesPage />} />
             <Route path={ROUTES.adminQuestions} element={<AdminQuestionsPage />} />
             <Route path={ROUTES.adminExams} element={<AdminExamsPage />} />
+            <Route path={ROUTES.adminAttempts} element={<AdminAttemptsPage />} />
             <Route
               path={ROUTES.adminCertificates}
               element={<AdminCertificatesPage />}
