@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { CursorPaginated } from 'src/common/interfaces/api-response.interface';
 import { decodeCursor } from 'src/common/utils/cursor.util';
@@ -15,7 +19,9 @@ import {
 } from 'src/generated/prisma/enums';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
 
+import { AdminCertificateQueryDto } from './dto/admin-certificate-query.dto';
 import { CertificateQueryDto } from './dto/certificate-query.dto';
+import { RevokeCertificateDto } from './dto/revoke-certificate.dto';
 
 export interface CertificateView {
   id: number;
@@ -160,6 +166,74 @@ export class CertificatesService {
     }
 
     return certificate;
+  }
+
+  async findAll(
+    query: AdminCertificateQueryDto,
+  ): Promise<CursorPaginated<CertificateView>> {
+    const cursor = decodeCursor(query.cursor);
+
+    const rows = await this.prisma.certificate.findMany({
+      where: {
+        ...(query.status ? { status: query.status } : {}),
+        ...(query.search
+          ? {
+              OR: [
+                {
+                  certificateId: {
+                    contains: query.search,
+                    mode: 'insensitive',
+                  },
+                },
+                {
+                  doctorFullname: {
+                    contains: query.search,
+                    mode: 'insensitive',
+                  },
+                },
+              ],
+            }
+          : {}),
+      },
+      select: certificateSelect,
+      take: query.limit + 1,
+      ...(cursor ? { cursor: { id: cursor.id }, skip: 1 } : {}),
+      orderBy: [{ issuedAt: 'desc' }, { id: 'desc' }],
+    });
+
+    return buildCursorPaginated(rows, query.limit, 'issuedAt');
+  }
+
+  /**
+   * Bekor qilish yozuvni o'chirmaydi — tarix saqlanadi va ommaviy tekshiruv
+   * darhol REVOKED holatini ko'rsatadi.
+   */
+  async revoke(
+    certificateId: string,
+    dto: RevokeCertificateDto,
+  ): Promise<CertificateView> {
+    const certificate = await this.prisma.certificate.findUnique({
+      where: { certificateId },
+      select: { id: true, status: true },
+    });
+
+    if (!certificate) {
+      throw new NotFoundException('Certificate not found');
+    }
+
+    if (certificate.status === CertificateStatus.REVOKED) {
+      throw new ConflictException('This certificate is already revoked');
+    }
+
+    return this.prisma.certificate.update({
+      where: { id: certificate.id },
+      data: {
+        status: CertificateStatus.REVOKED,
+        revokedAt: new Date(),
+        revokedReason: dto.reason ?? null,
+      },
+      select: certificateSelect,
+    });
   }
 
   async verify(certificateId: string): Promise<CertificateVerificationView> {

@@ -1,4 +1,5 @@
 import type { QualificationLevel } from '@/features/attempts'
+import type { PaginationParams } from '@/shared/api'
 
 export type CertificateStatus = 'ACTIVE' | 'REVOKED'
 
@@ -35,4 +36,8 @@ export interface PublicCertificate {
 export interface CertificateVerification {
   status: VerificationStatus
   certificate: PublicCertificate | null
+}
+
+export type AdminCertificateParams = PaginationParams & {
+  status?: CertificateStatus
 }

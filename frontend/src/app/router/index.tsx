@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 
 import {
+  AdminCertificatesPage,
   AdminDashboardPage,
   AdminExamsPage,
   AdminQuestionsPage,
@@ -15,9 +16,11 @@ import { LoginPage } from '@/pages/login-page'
 import { NotFoundPage } from '@/pages/not-found-page'
 import { ProfilePage } from '@/pages/profile-page'
 import { RegisterPage } from '@/pages/register-page'
+import { VerifyPage } from '@/pages/verify-page'
 import { ROUTES } from '@/shared/config'
 import { Spinner } from '@/shared/ui/spinner'
 import { AuthLayout } from '../layouts/auth-layout'
+import { PublicLayout } from '../layouts/public-layout'
 import { DashboardLayout } from '../layouts/dashboard-layout'
 import {
   AdminRoute,
@@ -44,6 +47,10 @@ function RouteFallback() {
 export function AppRouter() {
   return (
     <Routes>
+      <Route element={<PublicLayout />}>
+        <Route path={ROUTES.verify} element={<VerifyPage />} />
+      </Route>
+
       <Route element={<GuestRoute />}>
         <Route element={<AuthLayout />}>
           <Route path={ROUTES.login} element={<LoginPage />} />
@@ -68,6 +75,10 @@ export function AppRouter() {
             <Route path={ROUTES.adminSpecialties} element={<AdminSpecialtiesPage />} />
             <Route path={ROUTES.adminQuestions} element={<AdminQuestionsPage />} />
             <Route path={ROUTES.adminExams} element={<AdminExamsPage />} />
+            <Route
+              path={ROUTES.adminCertificates}
+              element={<AdminCertificatesPage />}
+            />
             <Route
               path={ROUTES.designSystem}
               element={

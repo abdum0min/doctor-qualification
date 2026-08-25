@@ -1,4 +1,12 @@
-import { Controller, Get, Param, Query, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Query,
+  Res,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -20,7 +28,9 @@ import { UserRole } from 'src/generated/prisma/enums';
 
 import { CertificatePdfService } from './certificate-pdf.service';
 import { CertificatesService } from './certificates.service';
+import { AdminCertificateQueryDto } from './dto/admin-certificate-query.dto';
 import { CertificateQueryDto } from './dto/certificate-query.dto';
+import { RevokeCertificateDto } from './dto/revoke-certificate.dto';
 import {
   CertificateDto,
   CertificateVerificationDto,
@@ -60,6 +70,36 @@ export class CertificatesController {
     @Query() query: CertificateQueryDto,
   ) {
     return this.certificatesService.findOwn(userId, query);
+  }
+
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth('access-token')
+  @Get('all')
+  @ResponseMessage('Certificates')
+  @ApiOperation({ summary: 'Barcha sertifikatlar — admin ro`yxati' })
+  @ApiPaginatedResponse(CertificateDto)
+  @ApiErrorResponses(401, 403)
+  findAll(@Query() query: AdminCertificateQueryDto) {
+    return this.certificatesService.findAll(query);
+  }
+
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth('access-token')
+  @Patch(':certificateId/revoke')
+  @ResponseMessage('Certificate revoked')
+  @ApiOperation({
+    summary: 'Sertifikatni bekor qilish',
+    description:
+      'Yozuv o`chirilmaydi — holat REVOKED ga o`tadi va ommaviy tekshiruv ' +
+      'darhol shuni ko`rsatadi.',
+  })
+  @ApiDataResponse(CertificateDto)
+  @ApiErrorResponses(400, 401, 403, 404, 409)
+  revoke(
+    @Param('certificateId') certificateId: string,
+    @Body() dto: RevokeCertificateDto,
+  ) {
+    return this.certificatesService.revoke(certificateId, dto);
   }
 
   @Roles(UserRole.DOCTOR)

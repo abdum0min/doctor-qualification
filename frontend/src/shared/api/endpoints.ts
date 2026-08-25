@@ -35,6 +35,8 @@ export const ENDPOINTS = {
   },
   certificates: {
     root: '/certificates',
+    all: '/certificates/all',
+    revoke: (certificateId: string) => `/certificates/${certificateId}/revoke`,
     verify: (certificateId: string) => `/certificates/verify/${certificateId}`,
     download: (certificateId: string) => `/certificates/${certificateId}/download`,
   },

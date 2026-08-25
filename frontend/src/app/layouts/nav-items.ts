@@ -31,6 +31,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.adminSpecialties, label: 'Mutaxassisliklar', icon: Stethoscope },
   { to: ROUTES.adminQuestions, label: 'Savollar', icon: FileQuestion },
   { to: ROUTES.adminExams, label: 'Imtihonlar', icon: ClipboardList },
+  { to: ROUTES.adminCertificates, label: 'Sertifikatlar', icon: Award },
   { to: ROUTES.designSystem, label: 'Design System', icon: Palette },
 ]
 

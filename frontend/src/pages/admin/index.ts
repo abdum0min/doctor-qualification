@@ -1,3 +1,4 @@
+export { AdminCertificatesPage } from './admin-certificates-page'
 export { AdminDashboardPage } from './admin-dashboard-page'
 export { AdminExamsPage } from './admin-exams-page'
 export { AdminQuestionsPage } from './admin-questions-page'
