@@ -6,6 +6,7 @@ import {
   BarChart3,
   GraduationCap,
   Stethoscope,
+  Trophy,
   User,
   Users,
   type LucideIcon,
@@ -23,6 +24,7 @@ export interface NavItem {
 const DOCTOR_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.dashboard, label: 'Boshqaruv paneli', icon: LayoutDashboard },
   { to: ROUTES.exams, label: 'Imtihonlar', icon: GraduationCap },
+  { to: ROUTES.ranking, label: 'Reyting', icon: Trophy },
   { to: ROUTES.certificates, label: 'Sertifikatlar', icon: Award },
   { to: ROUTES.profile, label: 'Profil', icon: User },
 ]
@@ -33,6 +35,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.adminSpecialties, label: 'Mutaxassisliklar', icon: Stethoscope },
   { to: ROUTES.adminExams, label: 'Imtihonlar', icon: ClipboardList },
   { to: ROUTES.adminAttempts, label: 'Natijalar', icon: BarChart3 },
+  { to: ROUTES.adminRankings, label: 'Reyting', icon: Trophy },
   { to: ROUTES.adminCertificates, label: 'Sertifikatlar', icon: Award },
   { to: ROUTES.designSystem, label: 'Design System', icon: Palette },
 ]

@@ -11,6 +11,7 @@ export const ROUTES = {
   dashboard: '/dashboard',
   exams: '/exams',
   attempt: '/attempts/:attemptId',
+  ranking: '/ranking',
   certificates: '/certificates',
   profile: '/profile',
 
@@ -20,6 +21,7 @@ export const ROUTES = {
   adminSpecialties: '/admin/specialties',
   adminExams: '/admin/exams',
   adminExamQuestions: '/admin/exams/:examId/questions',
+  adminRankings: '/admin/rankings',
   adminAttempts: '/admin/attempts',
   adminCertificates: '/admin/certificates',
   designSystem: '/design-system',

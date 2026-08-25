@@ -18,6 +18,7 @@ import { ExamsPage } from '@/pages/exams-page'
 import { LoginPage } from '@/pages/login-page'
 import { NotFoundPage } from '@/pages/not-found-page'
 import { ProfilePage } from '@/pages/profile-page'
+import { RankingPage } from '@/pages/ranking-page'
 import { RegisterPage } from '@/pages/register-page'
 import { VerifyPage } from '@/pages/verify-page'
 import { ROUTES } from '@/shared/config'
@@ -62,6 +63,7 @@ export function AppRouter() {
             <Route path={ROUTES.dashboard} element={<DashboardPage />} />
             <Route path={ROUTES.exams} element={<ExamsPage />} />
             <Route path={ROUTES.attempt} element={<AttemptPage />} />
+            <Route path={ROUTES.ranking} element={<RankingPage />} />
             <Route path={ROUTES.certificates} element={<CertificatesPage />} />
             <Route path={ROUTES.profile} element={<ProfilePage />} />
           </Route>
@@ -76,6 +78,7 @@ export function AppRouter() {
               element={<AdminExamQuestionsPage />}
             />
             <Route path={ROUTES.adminAttempts} element={<AdminAttemptsPage />} />
+            <Route path={ROUTES.adminRankings} element={<RankingPage />} />
             <Route
               path={ROUTES.adminCertificates}
               element={<AdminCertificatesPage />}

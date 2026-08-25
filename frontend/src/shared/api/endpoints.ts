@@ -41,6 +41,11 @@ export const ENDPOINTS = {
     verify: (certificateId: string) => `/certificates/verify/${certificateId}`,
     download: (certificateId: string) => `/certificates/${certificateId}/download`,
   },
+  rankings: {
+    root: '/rankings',
+    top: '/rankings/top',
+    me: '/rankings/me',
+  },
   statistics: {
     overview: '/statistics/overview',
     specialties: '/statistics/specialties',

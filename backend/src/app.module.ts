@@ -20,6 +20,7 @@ import { ExamsModule } from './modules/exams/exams.module';
 import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 import { QuestionsModule } from './modules/questions/questions.module';
+import { RankingsModule } from './modules/rankings/rankings.module';
 import { SpecialtiesModule } from './modules/specialties/specialties.module';
 import { StatisticsModule } from './modules/statistics/statistics.module';
 
@@ -53,6 +54,7 @@ import { StatisticsModule } from './modules/statistics/statistics.module';
     AttemptsModule,
     CertificatesModule,
     StatisticsModule,
+    RankingsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
