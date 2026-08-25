@@ -138,6 +138,7 @@ export function AdminAttemptsPage() {
                 table.resetPage()
               }}
               placeholder="Barcha mutaxassisliklar"
+              clearLabel="Barcha mutaxassisliklar"
             />
           </div>
           <div className="w-44">

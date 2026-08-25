@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 
 import { Paginated } from 'src/common/interfaces/api-response.interface';
+import { AuthenticatedUser } from 'src/common/types/authenticated-user.type';
 import { buildPaginated, toSkipTake } from 'src/common/utils/pagination.util';
 import {
   buildCertificateId,
@@ -15,6 +16,7 @@ import { Prisma } from 'src/generated/prisma/client';
 import {
   CertificateStatus,
   QualificationLevel,
+  UserRole,
 } from 'src/generated/prisma/enums';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
 
@@ -152,14 +154,21 @@ export class CertificatesService {
     return buildPaginated(rows, total, query);
   }
 
-  async findOwnByCertificateId(
-    userId: number,
+  /**
+   * Admin istalgan sertifikatni yuklab oladi, shifokor esa faqat o'zinikini —
+   * shuning uchun filtr rolga qarab quriladi.
+   */
+  async findForDownload(
+    user: AuthenticatedUser,
     certificateId: string,
   ): Promise<CertificateView> {
-    const doctorProfile = await this.requireDoctorProfile(userId);
+    const ownerFilter =
+      user.role === UserRole.ADMIN
+        ? {}
+        : { doctorProfileId: (await this.requireDoctorProfile(user.id)).id };
 
     const certificate = await this.prisma.certificate.findFirst({
-      where: { certificateId, doctorProfileId: doctorProfile.id },
+      where: { certificateId, ...ownerFilter },
       select: certificateSelect,
     });
 

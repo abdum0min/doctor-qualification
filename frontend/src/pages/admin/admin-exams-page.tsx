@@ -111,6 +111,7 @@ export function AdminExamsPage() {
             value={specialtyId}
             onChange={setSpecialtyId}
             placeholder="Barcha mutaxassisliklar"
+              clearLabel="Barcha mutaxassisliklar"
           />
         </div>
       }

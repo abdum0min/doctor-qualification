@@ -150,6 +150,7 @@ export function AdminDoctorsPage() {
                 table.resetPage()
               }}
               placeholder="Barcha mutaxassisliklar"
+              clearLabel="Barcha mutaxassisliklar"
             />
           </div>
           <div className="w-40">

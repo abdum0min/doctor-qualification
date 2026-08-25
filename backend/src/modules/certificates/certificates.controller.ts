@@ -16,6 +16,7 @@ import {
 import type { Response } from 'express';
 
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from 'src/common/types/authenticated-user.type';
 import { Public } from 'src/common/decorators/public.decorator';
 import { ResponseMessage } from 'src/common/decorators/response-message.decorator';
 import { Roles } from 'src/common/decorators/roles.decorator';
@@ -102,19 +103,23 @@ export class CertificatesController {
     return this.certificatesService.revoke(certificateId, dto);
   }
 
-  @Roles(UserRole.DOCTOR)
+  @Roles(UserRole.DOCTOR, UserRole.ADMIN)
   @ApiBearerAuth('access-token')
   @Get(':certificateId/download')
-  @ApiOperation({ summary: 'Sertifikatni PDF sifatida yuklab olish' })
+  @ApiOperation({
+    summary: 'Sertifikatni PDF sifatida yuklab olish',
+    description:
+      'Shifokor faqat o`z sertifikatini, admin esa istalganini yuklab oladi.',
+  })
   @ApiProduces('application/pdf')
   @ApiErrorResponses(401, 403, 404)
   async download(
-    @CurrentUser('id') userId: number,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('certificateId') certificateId: string,
     @Res() response: Response,
   ): Promise<void> {
-    const certificate = await this.certificatesService.findOwnByCertificateId(
-      userId,
+    const certificate = await this.certificatesService.findForDownload(
+      user,
       certificateId,
     );
 

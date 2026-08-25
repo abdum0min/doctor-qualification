@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { UserRole } from '../src/generated/prisma/enums';
 import { DEMO_EXAMS, type DemoExam } from './seed-data/demo-exams';
+import { demoDoctorLogin, seedDemoAttempts } from './seeders/attempts.seeder';
 
 const SALT_ROUNDS = 10;
 
@@ -173,15 +174,22 @@ async function main(): Promise<void> {
   await seedSpecialties();
   const created = await seedExams();
   await seedAccounts();
+  const demo = await seedDemoAttempts(prisma);
 
   console.log('✅ Seed tugadi');
   console.log(`   Yangi imtihonlar: ${created.exams}`);
   console.log(`   Yangi demo savollar: ${created.questions}`);
+  console.log(
+    `   Demo shifokorlar: ${demo.doctors} | urinishlar: ${demo.attempts} | sertifikatlar: ${demo.certificates}`,
+  );
   for (const account of ACCOUNTS) {
     console.log(
       `   ${account.role.padEnd(6)} ${account.email} / ${account.password}`,
     );
   }
+
+  const sample = demoDoctorLogin();
+  console.log(`   DOCTOR ${sample.email} / ${sample.password} (demo natijalar bilan)`);
 }
 
 main()

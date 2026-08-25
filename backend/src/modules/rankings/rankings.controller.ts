@@ -51,10 +51,7 @@ export class RankingsController {
   @ApiOperation({ summary: 'Shifokorning reytingdagi o`z o`rni' })
   @ApiDataResponse(MyRankingDto)
   @ApiErrorResponses(403, 404)
-  findOwn(
-    @CurrentUser('id') userId: number,
-    @Query() query: RankingsQueryDto,
-  ) {
+  findOwn(@CurrentUser('id') userId: number, @Query() query: RankingsQueryDto) {
     return this.rankingsService.findOwn(userId, query);
   }
 }

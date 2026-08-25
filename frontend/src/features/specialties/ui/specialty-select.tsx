@@ -14,6 +14,8 @@ interface SpecialtySelectProps {
   placeholder?: string
   /** Tanlovni bekor qilish imkonini beradi. */
   clearable?: boolean
+  /** Bo`sh tanlov matni — filtrlarda "Barcha mutaxassisliklar" bo`ladi. */
+  clearLabel?: string
   'aria-invalid'?: boolean
 }
 
@@ -25,6 +27,7 @@ export function SpecialtySelect({
   id,
   placeholder = 'Mutaxassislikni tanlang',
   clearable = false,
+  clearLabel = 'Tanlanmagan',
   ...rest
 }: SpecialtySelectProps) {
   const { data: specialties, isLoading } = useActiveSpecialties()
@@ -39,7 +42,7 @@ export function SpecialtySelect({
         <SelectValue placeholder={isLoading ? 'Yuklanmoqda...' : placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {clearable && <SelectItem value={NONE}>Tanlanmagan</SelectItem>}
+        {clearable && <SelectItem value={NONE}>{clearLabel}</SelectItem>}
         {specialties?.map((specialty) => (
           <SelectItem key={specialty.id} value={String(specialty.id)}>
             {specialty.name}

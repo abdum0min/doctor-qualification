@@ -35,10 +35,20 @@ describe('calculateRankingScore', () => {
 
   it('rewards volume — more attempts at the same average rank higher', () => {
     const rare = calculateRankingScore(
-      metrics({ attemptCount: 1, passedCount: 1, averageScore: 90, bestScore: 90 }),
+      metrics({
+        attemptCount: 1,
+        passedCount: 1,
+        averageScore: 90,
+        bestScore: 90,
+      }),
     );
     const regular = calculateRankingScore(
-      metrics({ attemptCount: 5, passedCount: 5, averageScore: 90, bestScore: 90 }),
+      metrics({
+        attemptCount: 5,
+        passedCount: 5,
+        averageScore: 90,
+        bestScore: 90,
+      }),
     );
 
     expect(regular).toBeGreaterThan(rare);
@@ -87,14 +97,14 @@ describe('compareRanked', () => {
   });
 
   it('breaks ties deterministically so pagination stays stable', () => {
-    const build = () => [
-      doctor(9, {}),
-      doctor(3, {}),
-      doctor(7, {}),
-    ];
+    const build = () => [doctor(9, {}), doctor(3, {}), doctor(7, {})];
 
-    const first = build().sort(compareRanked).map((row) => row.doctorId);
-    const second = build().sort(compareRanked).map((row) => row.doctorId);
+    const first = build()
+      .sort(compareRanked)
+      .map((row) => row.doctorId);
+    const second = build()
+      .sort(compareRanked)
+      .map((row) => row.doctorId);
 
     expect(first).toEqual(second);
     expect(first).toEqual([3, 7, 9]);

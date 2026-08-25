@@ -132,7 +132,9 @@ export class RankingsService {
         attemptCount: own.length,
         passedCount: own.filter((attempt) => attempt.passed).length,
         averageScore: scores.length
-          ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length)
+          ? Math.round(
+              scores.reduce((sum, score) => sum + score, 0) / scores.length,
+            )
           : 0,
         bestScore: scores.length ? Math.max(...scores) : 0,
       };
@@ -165,9 +167,7 @@ function buildWhere(query: RankingsQueryDto): Prisma.ExamAttemptWhereInput {
   return {
     status: { in: COMPLETED },
     ...(since ? { completedAt: { gte: since } } : {}),
-    ...(query.specialtyId
-      ? { exam: { specialtyId: query.specialtyId } }
-      : {}),
+    ...(query.specialtyId ? { exam: { specialtyId: query.specialtyId } } : {}),
     ...(query.search
       ? {
           doctorProfile: {

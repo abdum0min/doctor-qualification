@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Ban, ExternalLink } from 'lucide-react'
+import { Ban, Download, ExternalLink } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { QualificationBadge } from '@/features/attempts'
 import {
   certificateState,
   RevokeCertificateDialog,
+  useDownloadCertificate,
   useAdminCertificates,
   type Certificate,
   type CertificateStatus,
@@ -17,6 +18,7 @@ import { formatDate } from '@/shared/lib/format'
 import { AsyncState } from '@/shared/ui/async-state'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
+import { Spinner } from '@/shared/ui/spinner'
 import { DataTable, type Column } from '@/shared/ui/data-table'
 import { PageShell } from '@/shared/ui/page-shell'
 import {
@@ -30,7 +32,11 @@ import { TablePagination } from '@/shared/ui/table-pagination'
 
 const ALL = 'all'
 
-const columns: Column<Certificate>[] = [
+function buildColumns(
+  onDownload: (certificateId: string) => void,
+  downloadingId: string | null,
+): Column<Certificate>[] {
+  return [
   {
     key: 'certificateId',
     header: 'Certificate ID',
@@ -79,9 +85,19 @@ const columns: Column<Certificate>[] = [
   {
     key: 'actions',
     header: '',
-    className: 'w-24 text-right',
+    className: 'w-32 text-right',
     cell: (row) => (
       <div className="flex justify-end gap-1">
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="PDF yuklab olish"
+          disabled={downloadingId === row.certificateId}
+          onClick={() => onDownload(row.certificateId)}
+        >
+          {downloadingId === row.certificateId ? <Spinner /> : <Download />}
+        </Button>
+
         <Button asChild variant="ghost" size="icon" aria-label="Tekshirish sahifasi">
           <Link
             to={buildRoute.verify(row.certificateId)}
@@ -101,8 +117,9 @@ const columns: Column<Certificate>[] = [
         )}
       </div>
     ),
-  },
-]
+    },
+  ]
+}
 
 export function AdminCertificatesPage() {
   const table = useTableQuery(10)
@@ -114,6 +131,16 @@ export function AdminCertificatesPage() {
   )
 
   const { data, isLoading, isError, error } = useAdminCertificates(params)
+  const download = useDownloadCertificate()
+
+  const columns = useMemo(
+    () =>
+      buildColumns(
+        (certificateId) => download.mutate(certificateId),
+        download.isPending ? download.variables : null,
+      ),
+    [download],
+  )
 
   return (
     <PageShell
