@@ -5,12 +5,25 @@ import { toast } from 'sonner'
 import type { ApiError } from '@/shared/api'
 import { buildRoute } from '@/shared/config'
 import { queryClient } from '@/shared/lib/query-client'
-import { attemptsApi, type SaveAnswerInput } from './attempts-api'
+import {
+  attemptsApi,
+  type AttemptHistoryParams,
+  type SaveAnswerInput,
+} from './attempts-api'
 import type { Attempt } from '../model/types'
 
 export const attemptKeys = {
   all: ['attempts'] as const,
   detail: (id: number) => [...attemptKeys.all, 'detail', id] as const,
+  history: (params: AttemptHistoryParams) =>
+    [...attemptKeys.all, 'history', params] as const,
+}
+
+export function useAttemptHistory(params: AttemptHistoryParams) {
+  return useQuery({
+    queryKey: attemptKeys.history(params),
+    queryFn: () => attemptsApi.history(params),
+  })
 }
 
 export function useAttempt(id: number) {

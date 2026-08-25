@@ -5,6 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { CursorPaginated } from 'src/common/interfaces/api-response.interface';
+import { decodeCursor } from 'src/common/utils/cursor.util';
+import { buildCursorPaginated } from 'src/common/utils/pagination.util';
 import { Prisma } from 'src/generated/prisma/client';
 import {
   AttemptStatus,
@@ -14,11 +17,14 @@ import {
 import { PrismaService } from 'src/modules/prisma/prisma.service';
 
 import { AttemptEvaluator } from './attempt-evaluator';
+import { AttemptHistoryQueryDto } from './dto/attempt-history-query.dto';
 import { SaveAnswerDto } from './dto/save-answer.dto';
 
 export interface AttemptOptionView {
   id: number;
   text: string;
+  /** Faqat yakunlangan urinishda qaytadi. */
+  isCorrect?: boolean;
 }
 
 export interface AttemptQuestionView {
@@ -27,10 +33,11 @@ export interface AttemptQuestionView {
   questionText: string;
   difficulty: Difficulty;
   selectedOptionId: number | null;
+  isCorrect?: boolean | null;
   options: AttemptOptionView[];
 }
 
-export interface AttemptView {
+export interface AttemptSummaryView {
   id: number;
   status: AttemptStatus;
   exam: { id: number; title: string; specialty: { id: number; name: string } };
@@ -40,18 +47,20 @@ export interface AttemptView {
   startedAt: Date;
   deadlineAt: Date;
   completedAt: Date | null;
-  /** Server hisoblagan qolgan vaqt — mijoz taymeri faqat ko'rsatish uchun. */
-  remainingSeconds: number;
-  answeredCount: number;
   correctCount: number | null;
   score: number | null;
   qualification: QualificationLevel | null;
   passed: boolean | null;
+}
+
+export interface AttemptView extends AttemptSummaryView {
+  /** Server hisoblagan qolgan vaqt — mijoz taymeri faqat ko'rsatish uchun. */
+  remainingSeconds: number;
+  answeredCount: number;
   questions: AttemptQuestionView[];
 }
 
-/** `isCorrect` bu tanlovda umuman yo'q — imtihon davomida sizib chiqa olmaydi. */
-const attemptSelect = {
+const summarySelect = {
   id: true,
   status: true,
   questionCount: true,
@@ -71,6 +80,11 @@ const attemptSelect = {
       specialty: { select: { id: true, name: true } },
     },
   },
+} satisfies Prisma.ExamAttemptSelect;
+
+/** Imtihon davomida: `isCorrect` bu tanlovda umuman yo'q. */
+const inProgressSelect = {
+  ...summarySelect,
   questions: {
     select: {
       id: true,
@@ -87,9 +101,33 @@ const attemptSelect = {
   },
 } satisfies Prisma.ExamAttemptSelect;
 
-type AttemptRow = Prisma.ExamAttemptGetPayload<{
-  select: typeof attemptSelect;
+/** Yakunlangandan keyin to'g'ri javoblar ochiladi — xatolarni tahlil qilish uchun. */
+const reviewSelect = {
+  ...summarySelect,
+  questions: {
+    select: {
+      id: true,
+      position: true,
+      questionText: true,
+      difficulty: true,
+      selectedOptionId: true,
+      isCorrect: true,
+      options: {
+        select: { id: true, text: true, isCorrect: true },
+        orderBy: { position: 'asc' },
+      },
+    },
+    orderBy: { position: 'asc' },
+  },
+} satisfies Prisma.ExamAttemptSelect;
+
+type SummaryRow = Prisma.ExamAttemptGetPayload<{
+  select: typeof summarySelect;
 }>;
+type InProgressRow = Prisma.ExamAttemptGetPayload<{
+  select: typeof inProgressSelect;
+}>;
+type ReviewRow = Prisma.ExamAttemptGetPayload<{ select: typeof reviewSelect }>;
 
 @Injectable()
 export class AttemptsService {
@@ -137,27 +175,10 @@ export class AttemptsService {
       return this.findOne(userId, existing.id);
     }
 
-    const questionIds = await this.sampleQuestionIds(
+    const questions = await this.sampleQuestions(
       exam.specialtyId,
       exam.difficulty,
       exam.questionCount,
-    );
-
-    const questions = await this.prisma.question.findMany({
-      where: { id: { in: questionIds } },
-      select: {
-        id: true,
-        text: true,
-        difficulty: true,
-        options: {
-          select: { text: true, isCorrect: true, position: true },
-          orderBy: { position: 'asc' },
-        },
-      },
-    });
-
-    const ordered = questionIds.map((id) =>
-      questions.find((question) => question.id === id)!,
     );
 
     const now = new Date();
@@ -165,13 +186,13 @@ export class AttemptsService {
       data: {
         examId: exam.id,
         doctorProfileId: doctorProfile.id,
-        questionCount: ordered.length,
+        questionCount: questions.length,
         timeLimitMinutes: exam.timeLimitMinutes,
         passingScore: exam.passingScore,
         startedAt: now,
         deadlineAt: new Date(now.getTime() + exam.timeLimitMinutes * 60_000),
         questions: {
-          create: ordered.map((question, position) => ({
+          create: questions.map((question, position) => ({
             questionId: question.id,
             position,
             questionText: question.text,
@@ -188,7 +209,7 @@ export class AttemptsService {
           })),
         },
       },
-      select: attemptSelect,
+      select: inProgressSelect,
     });
 
     return toView(attempt);
@@ -202,7 +223,37 @@ export class AttemptsService {
       return this.finalize(attempt.id, true);
     }
 
-    return toView(attempt);
+    if (attempt.status !== AttemptStatus.IN_PROGRESS) {
+      return this.loadReview(attemptId);
+    }
+
+    const inProgress = await this.prisma.examAttempt.findUniqueOrThrow({
+      where: { id: attemptId },
+      select: inProgressSelect,
+    });
+
+    return toView(inProgress);
+  }
+
+  async findHistory(
+    userId: number,
+    query: AttemptHistoryQueryDto,
+  ): Promise<CursorPaginated<AttemptSummaryView>> {
+    const doctorProfile = await this.requireDoctorProfile(userId);
+    const cursor = decodeCursor(query.cursor);
+
+    const rows = await this.prisma.examAttempt.findMany({
+      where: {
+        doctorProfileId: doctorProfile.id,
+        ...(query.examId ? { examId: query.examId } : {}),
+      },
+      select: summarySelect,
+      take: query.limit + 1,
+      ...(cursor ? { cursor: { id: cursor.id }, skip: 1 } : {}),
+      orderBy: [{ startedAt: 'desc' }, { id: 'desc' }],
+    });
+
+    return buildCursorPaginated(rows, query.limit, 'startedAt');
   }
 
   async saveAnswer(
@@ -223,9 +274,10 @@ export class AttemptsService {
     }
 
     // Savol shu urinishga tegishli ekani tekshiriladi: begona `id` qabul qilinmaydi.
-    const question = attempt.questions.find(
-      (item) => item.id === dto.attemptQuestionId,
-    );
+    const question = await this.prisma.attemptQuestion.findFirst({
+      where: { id: dto.attemptQuestionId, attemptId },
+      select: { id: true, options: { select: { id: true } } },
+    });
 
     if (!question) {
       throw new NotFoundException('Question does not belong to this attempt');
@@ -238,13 +290,11 @@ export class AttemptsService {
       throw new BadRequestException('Option does not belong to this question');
     }
 
-    const updated = await this.prisma.attemptQuestion.update({
+    return this.prisma.attemptQuestion.update({
       where: { id: question.id },
       data: { selectedOptionId: dto.attemptOptionId },
-      select: attemptSelect.questions.select,
+      select: inProgressSelect.questions.select,
     });
-
-    return updated;
   }
 
   async submit(userId: number, attemptId: number): Promise<AttemptView> {
@@ -266,7 +316,7 @@ export class AttemptsService {
     attemptId: number,
     expired: boolean,
   ): Promise<AttemptView> {
-    const graded = await this.prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx) => {
       const snapshot = await tx.examAttempt.findUniqueOrThrow({
         where: { id: attemptId },
         select: {
@@ -291,7 +341,7 @@ export class AttemptsService {
         ),
       );
 
-      return tx.examAttempt.update({
+      await tx.examAttempt.update({
         where: { id: attemptId },
         data: {
           status: result.status,
@@ -301,11 +351,19 @@ export class AttemptsService {
           qualification: result.qualification,
           passed: result.passed,
         },
-        select: attemptSelect,
       });
     });
 
-    return toView(graded);
+    return this.loadReview(attemptId);
+  }
+
+  private async loadReview(attemptId: number): Promise<AttemptView> {
+    const attempt = await this.prisma.examAttempt.findUniqueOrThrow({
+      where: { id: attemptId },
+      select: reviewSelect,
+    });
+
+    return toView(attempt);
   }
 
   /** Muddati o'tgan, ammo yakunlanmagan urinishlar avtomatik yopiladi. */
@@ -324,18 +382,26 @@ export class AttemptsService {
     }
   }
 
-  private async sampleQuestionIds(
+  private async sampleQuestions(
     specialtyId: number,
     difficulty: Difficulty | null,
     count: number,
-  ): Promise<number[]> {
+  ) {
     const candidates = await this.prisma.question.findMany({
       where: {
         specialtyId,
         isActive: true,
         ...(difficulty ? { difficulty } : {}),
       },
-      select: { id: true },
+      select: {
+        id: true,
+        text: true,
+        difficulty: true,
+        options: {
+          select: { text: true, isCorrect: true },
+          orderBy: { position: 'asc' },
+        },
+      },
     });
 
     if (candidates.length < count) {
@@ -344,9 +410,7 @@ export class AttemptsService {
       );
     }
 
-    return shuffle(candidates)
-      .slice(0, count)
-      .map((question) => question.id);
+    return shuffle(candidates).slice(0, count);
   }
 
   private async requireDoctorProfile(userId: number): Promise<{ id: number }> {
@@ -365,10 +429,10 @@ export class AttemptsService {
   private async requireOwnAttempt(
     doctorProfileId: number,
     attemptId: number,
-  ): Promise<AttemptRow> {
+  ): Promise<SummaryRow> {
     const attempt = await this.prisma.examAttempt.findFirst({
       where: { id: attemptId, doctorProfileId },
-      select: attemptSelect,
+      select: summarySelect,
     });
 
     if (!attempt) {
@@ -400,7 +464,7 @@ function shuffle<T>(items: readonly T[]): T[] {
   return result;
 }
 
-function toView(attempt: AttemptRow): AttemptView {
+function toView(attempt: InProgressRow | ReviewRow): AttemptView {
   const remainingMs = attempt.deadlineAt.getTime() - Date.now();
 
   return {

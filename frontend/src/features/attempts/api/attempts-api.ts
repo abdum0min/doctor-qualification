@@ -1,5 +1,5 @@
-import { ENDPOINTS, http } from '@/shared/api'
-import type { Attempt, AttemptQuestion } from '../model/types'
+import { ENDPOINTS, http, type PaginationParams } from '@/shared/api'
+import type { Attempt, AttemptQuestion, AttemptSummary } from '../model/types'
 
 export interface SaveAnswerInput {
   attemptId: number
@@ -7,7 +7,11 @@ export interface SaveAnswerInput {
   attemptOptionId: number | null
 }
 
+export type AttemptHistoryParams = PaginationParams & { examId?: number }
+
 export const attemptsApi = {
+  history: (params: AttemptHistoryParams) =>
+    http.list<AttemptSummary>(ENDPOINTS.attempts.root, params),
   start: (examId: number) => http.post<Attempt>(ENDPOINTS.attempts.root, { examId }),
   byId: (id: number) => http.get<Attempt>(ENDPOINTS.attempts.byId(id)),
   saveAnswer: ({ attemptId, ...body }: SaveAnswerInput) =>

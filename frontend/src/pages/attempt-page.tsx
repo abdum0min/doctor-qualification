@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom'
 
 import {
   AttemptResultSummary,
+  AttemptReview,
   ExamTimer,
   QuestionCard,
   QuestionNavigator,
@@ -53,7 +54,10 @@ export function AttemptPage() {
       errorMessage={(error as ApiError | null)?.message}
     >
       {attempt && (isFinished ? (
-        <AttemptResultSummary attempt={attempt} />
+        <div className="mx-auto max-w-2xl space-y-4">
+          <AttemptResultSummary attempt={attempt} />
+          <AttemptReview attempt={attempt} />
+        </div>
       ) : (
         <div className="mx-auto max-w-3xl space-y-4">
           <Card>

@@ -31,6 +31,13 @@ export class AttemptOptionDto {
 
   @ApiProperty({ example: 'Ko`krak qafasi orqasidagi siquvchi og`riq' })
   text: string;
+
+  @ApiProperty({
+    example: true,
+    required: false,
+    description: 'Faqat yakunlangan urinishda qaytadi',
+  })
+  isCorrect?: boolean;
 }
 
 export class AttemptQuestionDto {
@@ -49,8 +56,50 @@ export class AttemptQuestionDto {
   @ApiProperty({ example: 168, nullable: true })
   selectedOptionId: number | null;
 
+  @ApiProperty({
+    example: true,
+    nullable: true,
+    description: 'Faqat yakunlangan urinishda qaytadi',
+  })
+  isCorrect?: boolean | null;
+
   @ApiProperty({ type: [AttemptOptionDto] })
   options: AttemptOptionDto[];
+}
+
+export class AttemptSummaryDto {
+  @ApiProperty({ example: 12 })
+  id: number;
+
+  @ApiProperty({ enum: AttemptStatus })
+  status: AttemptStatus;
+
+  @ApiProperty({ type: AttemptExamDto })
+  exam: AttemptExamDto;
+
+  @ApiProperty({ example: 20 })
+  questionCount: number;
+
+  @ApiProperty({ example: 70 })
+  passingScore: number;
+
+  @ApiProperty({ example: '2026-08-25T10:00:00.000Z' })
+  startedAt: Date;
+
+  @ApiProperty({ example: '2026-08-25T10:22:00.000Z', nullable: true })
+  completedAt: Date | null;
+
+  @ApiProperty({ example: 17, nullable: true })
+  correctCount: number | null;
+
+  @ApiProperty({ example: 85, nullable: true })
+  score: number | null;
+
+  @ApiProperty({ enum: QualificationLevel, nullable: true })
+  qualification: QualificationLevel | null;
+
+  @ApiProperty({ example: true, nullable: true })
+  passed: boolean | null;
 }
 
 export class AttemptDto {

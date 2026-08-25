@@ -1,5 +1,6 @@
 import { Briefcase, CalendarClock, Mail, Phone, Stethoscope } from 'lucide-react'
 
+import { AttemptHistoryTable } from '@/features/attempts'
 import { useCurrentUser } from '@/features/auth'
 import { useDoctorProfile } from '@/features/doctors'
 import type { ApiError } from '@/shared/api'
@@ -59,6 +60,16 @@ export function DashboardPage() {
               ))}
             </dl>
           </AsyncState>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Oldingi urinishlar</CardTitle>
+          <CardDescription>Topshirilgan imtihonlar tarixi</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AttemptHistoryTable limit={5} />
         </CardContent>
       </Card>
     </div>

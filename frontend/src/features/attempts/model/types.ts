@@ -23,6 +23,8 @@ export type AttemptStatus = 'IN_PROGRESS' | 'SUBMITTED' | 'EXPIRED'
 export interface AttemptOption {
   id: number
   text: string
+  /** Faqat yakunlangan urinishda keladi. */
+  isCorrect?: boolean
 }
 
 export interface AttemptQuestion {
@@ -31,6 +33,7 @@ export interface AttemptQuestion {
   questionText: string
   difficulty: Difficulty
   selectedOptionId: number | null
+  isCorrect?: boolean | null
   options: AttemptOption[]
 }
 
@@ -51,4 +54,18 @@ export interface Attempt {
   qualification: QualificationLevel | null
   passed: boolean | null
   questions: AttemptQuestion[]
+}
+
+export interface AttemptSummary {
+  id: number
+  status: AttemptStatus
+  exam: { id: number; title: string; specialty: { id: number; name: string } }
+  questionCount: number
+  passingScore: number
+  startedAt: string
+  completedAt: string | null
+  correctCount: number | null
+  score: number | null
+  qualification: QualificationLevel | null
+  passed: boolean | null
 }

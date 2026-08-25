@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
@@ -16,11 +17,17 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import {
   ApiDataResponse,
   ApiErrorResponses,
+  ApiPaginatedResponse,
 } from 'src/common/swagger/api-response.decorator';
 import { UserRole } from 'src/generated/prisma/enums';
 
 import { AttemptsService } from './attempts.service';
-import { AttemptDto, AttemptQuestionDto } from './dto/attempt.dto';
+import { AttemptHistoryQueryDto } from './dto/attempt-history-query.dto';
+import {
+  AttemptDto,
+  AttemptQuestionDto,
+  AttemptSummaryDto,
+} from './dto/attempt.dto';
 import { SaveAnswerDto } from './dto/save-answer.dto';
 import { StartAttemptDto } from './dto/start-attempt.dto';
 
@@ -46,9 +53,25 @@ export class AttemptsController {
     return this.attemptsService.start(userId, dto.examId);
   }
 
+  @Get()
+  @ResponseMessage('Attempt history')
+  @ApiOperation({ summary: 'Shifokorning oldingi urinishlari' })
+  @ApiPaginatedResponse(AttemptSummaryDto)
+  findHistory(
+    @CurrentUser('id') userId: number,
+    @Query() query: AttemptHistoryQueryDto,
+  ) {
+    return this.attemptsService.findHistory(userId, query);
+  }
+
   @Get(':id')
   @ResponseMessage('Attempt')
-  @ApiOperation({ summary: 'Urinish holati — davom ettirish uchun' })
+  @ApiOperation({
+    summary: 'Urinish holati',
+    description:
+      'Davom etayotgan urinishda to`g`ri javoblar yashirin bo`ladi; ' +
+      'yakunlangandan keyin tahlil uchun ochiladi.',
+  })
   @ApiDataResponse(AttemptDto)
   @ApiErrorResponses(404)
   findOne(
