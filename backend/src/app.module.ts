@@ -12,6 +12,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { EnvironmentVariables, validateEnv } from './config/env.validation';
+import { AttemptsModule } from './modules/attempts/attempts.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DoctorsModule } from './modules/doctors/doctors.module';
 import { ExamsModule } from './modules/exams/exams.module';
@@ -47,6 +48,7 @@ import { SpecialtiesModule } from './modules/specialties/specialties.module';
     SpecialtiesModule,
     QuestionsModule,
     ExamsModule,
+    AttemptsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

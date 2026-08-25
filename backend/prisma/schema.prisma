@@ -43,6 +43,8 @@ model DoctorProfile {
   workplace       String? @db.VarChar(160)
   experienceYears Int?
 
+  attempts ExamAttempt[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -83,7 +85,8 @@ model Question {
   difficulty  Difficulty
   isActive    Boolean    @default(true)
 
-  options QuestionOption[]
+  options  QuestionOption[]
+  attempts AttemptQuestion[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -121,8 +124,101 @@ model Exam {
 
   isActive Boolean @default(true)
 
+  attempts ExamAttempt[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([specialtyId, isActive])
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
+}
+
+enum QualificationLevel {
+  BEGINNER
+  INTERMEDIATE
+  GOOD
+  HIGH
+  EXPERT
+}
+
+/// Bitta imtihon urinishi. Sozlama qiymatlari (savollar soni, vaqt, o'tish bali)
+/// urinish boshlanganda nusxalanadi — keyin imtihon tahrirlansa ham tarixiy
+/// natija o'zgarmaydi.
+model ExamAttempt {
+  id     Int  @id @default(autoincrement())
+  examId Int
+  exam   Exam @relation(fields: [examId], references: [id], onDelete: Restrict)
+
+  doctorProfileId Int
+  doctorProfile   DoctorProfile @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+
+  status AttemptStatus @default(IN_PROGRESS)
+
+  questionCount    Int
+  timeLimitMinutes Int
+  passingScore     Int
+
+  startedAt   DateTime  @default(now())
+  deadlineAt  DateTime
+  completedAt DateTime?
+
+  correctCount  Int?
+  score         Int?
+  qualification QualificationLevel?
+  passed        Boolean?
+
+  questions AttemptQuestion[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([doctorProfileId, startedAt])
+  @@index([examId])
+  @@index([status])
+}
+
+/// Urinishga tanlangan savolning nusxasi. Manba savol keyin tahrirlansa yoki
+/// o'chirilsa ham shu yozuv o'zgarmaydi.
+model AttemptQuestion {
+  id        Int         @id @default(autoincrement())
+  attemptId Int
+  attempt   ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  /// Manba savol — faqat ma'lumot uchun, o'chirilsa `null` bo'ladi.
+  questionId Int?
+  question   Question? @relation(fields: [questionId], references: [id], onDelete: SetNull)
+
+  position     Int
+  questionText String     @db.VarChar(1000)
+  difficulty   Difficulty
+
+  selectedOptionId Int?           @unique
+  selectedOption   AttemptOption? @relation("SelectedOption", fields: [selectedOptionId], references: [id], onDelete: SetNull)
+
+  isCorrect Boolean?
+
+  options AttemptOption[] @relation("QuestionOptions")
+
+  @@unique([attemptId, position])
+}
+
+/// Javob variantining nusxasi. `isCorrect` global `omit` bilan yopilgan —
+/// imtihon davomida mijozga hech qachon yuborilmaydi.
+model AttemptOption {
+  id                Int             @id @default(autoincrement())
+  attemptQuestionId Int
+  attemptQuestion   AttemptQuestion @relation("QuestionOptions", fields: [attemptQuestionId], references: [id], onDelete: Cascade)
+
+  position  Int
+  text      String  @db.VarChar(500)
+  isCorrect Boolean
+
+  selectedBy AttemptQuestion? @relation("SelectedOption")
+
+  @@unique([attemptQuestionId, position])
 }

@@ -6,6 +6,8 @@ export const ROUTES = {
 
   // Shifokor (DOCTOR)
   dashboard: '/dashboard',
+  exams: '/exams',
+  attempt: '/attempts/:attemptId',
   profile: '/profile',
 
   // Administrator (ADMIN)
@@ -17,3 +19,8 @@ export const ROUTES = {
 } as const
 
 export type AppRoute = (typeof ROUTES)[keyof typeof ROUTES]
+
+/** Parametrli yo`llar uchun quruvchilar — xom qator birlashtirish o`rniga. */
+export const buildRoute = {
+  attempt: (attemptId: number) => `/attempts/${attemptId}`,
+} as const

@@ -7,7 +7,9 @@ import {
   AdminQuestionsPage,
   AdminSpecialtiesPage,
 } from '@/pages/admin'
+import { AttemptPage } from '@/pages/attempt-page'
 import { DashboardPage } from '@/pages/dashboard-page'
+import { ExamsPage } from '@/pages/exams-page'
 import { LoginPage } from '@/pages/login-page'
 import { NotFoundPage } from '@/pages/not-found-page'
 import { ProfilePage } from '@/pages/profile-page'
@@ -54,6 +56,8 @@ export function AppRouter() {
         <Route element={<DashboardLayout />}>
           <Route element={<DoctorRoute />}>
             <Route path={ROUTES.dashboard} element={<DashboardPage />} />
+            <Route path={ROUTES.exams} element={<ExamsPage />} />
+            <Route path={ROUTES.attempt} element={<AttemptPage />} />
             <Route path={ROUTES.profile} element={<ProfilePage />} />
           </Route>
 

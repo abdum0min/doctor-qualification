@@ -26,5 +26,11 @@ export const ENDPOINTS = {
     all: '/exams/all',
     byId: (id: number) => `/exams/${id}`,
   },
+  attempts: {
+    root: '/attempts',
+    byId: (id: number) => `/attempts/${id}`,
+    answers: (id: number) => `/attempts/${id}/answers`,
+    submit: (id: number) => `/attempts/${id}/submit`,
+  },
   health: '/health',
 } as const

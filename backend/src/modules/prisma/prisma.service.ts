@@ -31,6 +31,7 @@ export class PrismaService
       omit: {
         user: { password: true },
         questionOption: { isCorrect: true },
+        attemptOption: { isCorrect: true },
       },
     });
   }
