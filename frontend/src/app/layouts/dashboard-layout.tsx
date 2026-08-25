@@ -24,9 +24,21 @@ import { navItemsForRole, ROLE_LABELS, type NavItem } from './nav-items'
 
 const COLLAPSED_KEY = 'app_sidebar_collapsed'
 
-function isRouteActive(pathname: string, target: string): boolean {
+function matchesRoute(pathname: string, target: string): boolean {
   if (target === '/') return pathname === target
   return pathname === target || pathname.startsWith(`${target}/`)
+}
+
+/**
+ * `/admin` ham `/admin/doctors` ham mos keladi — shuning uchun eng uzun,
+ * ya'ni eng aniq mos keluvchi element tanlanadi. Aks holda bo'lim sahifasida
+ * ham, uning ostidagi sahifalarda ham ikkita havola bir vaqtda yonib turadi.
+ */
+function activeNavItem(pathname: string, items: NavItem[]): NavItem | undefined {
+  return items
+    .filter((item) => matchesRoute(pathname, item.to))
+    .sort((first, second) => second.to.length - first.to.length)
+    .at(0)
 }
 
 function CollapsibleLabel({
@@ -59,6 +71,7 @@ function SidebarNav({
 }) {
   const logout = useLogout()
   const { pathname } = useLocation()
+  const active = activeNavItem(pathname, items)
 
   const itemClass = (isActive: boolean) =>
     cn(
@@ -76,9 +89,8 @@ function SidebarNav({
           <CollapsibleLabel key={item.to} collapsed={collapsed} label={item.label}>
             <NavLink
               to={item.to}
-              end={item.to === '/'}
               onClick={onNavigate}
-              className={itemClass(isRouteActive(pathname, item.to))}
+              className={itemClass(item.to === active?.to)}
             >
               <item.icon className="size-4 shrink-0" />
               {!collapsed && item.label}
@@ -147,7 +159,7 @@ export function DashboardLayout() {
   const visibleItems = useMemo(() => navItemsForRole(user?.role), [user?.role])
 
   const title =
-    visibleItems.find((item) => isRouteActive(pathname, item.to))?.label ?? APP.name
+    activeNavItem(pathname, visibleItems)?.label ?? APP.name
 
   const toggleCollapsed = () => {
     setCollapsed((value) => {

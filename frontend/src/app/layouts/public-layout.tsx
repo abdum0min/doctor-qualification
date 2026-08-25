@@ -1,9 +1,11 @@
 import { Link, Outlet } from 'react-router-dom'
 
-import { useCurrentUser } from '@/features/auth'
+import { useCurrentUser, useSession } from '@/features/auth'
 import { APP, roleHome, ROUTES } from '@/shared/config'
+import { tokenStorage } from '@/shared/lib/token-storage'
 import { BrandLogo } from '@/shared/ui/brand-logo'
 import { Button } from '@/shared/ui/button'
+import { Skeleton } from '@/shared/ui/skeleton'
 import { ThemeToggle } from '@/shared/ui/theme-toggle'
 
 /** Bosh sahifadagi bo'limlarga ichki havolalar. */
@@ -16,7 +18,11 @@ const NAV_LINKS = [
 ]
 
 export function PublicLayout() {
+  // Ochiq sahifa `ProtectedRoute` ichida emas, shuning uchun sessiyani shu yerda
+  // tiklaymiz — aks holda kirgan foydalanuvchiga ham "Kirish" tugmasi ko'rinadi.
+  useSession()
   const user = useCurrentUser()
+  const sessionPending = Boolean(tokenStorage.get()) && !user
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -41,9 +47,15 @@ export function PublicLayout() {
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
 
-            {user ? (
+            {sessionPending ? (
+              // Token bor, lekin profil hali kelmadi — "Kirish" tugmasi bir lahza
+              // ko'rinib ketmasligi uchun joyi band qilib turiladi.
+              <Skeleton className="h-8 w-32" />
+            ) : user ? (
               <Button asChild size="sm">
-                <Link to={roleHome(user.role)}>Kabinet</Link>
+                <Link to={roleHome(user.role)}>
+                  {user.role === 'ADMIN' ? 'Boshqaruv paneli' : 'Kabinetim'}
+                </Link>
               </Button>
             ) : (
               <>
