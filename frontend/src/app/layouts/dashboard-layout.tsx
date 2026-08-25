@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { Bell, LogOut, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 
-import { useCurrentUser, useIsAdmin, useLogout } from '@/features/auth'
+import { useCurrentUser, useLogout } from '@/features/auth'
 import { getInitials } from '@/shared/lib/format'
 import { APP, ROUTES } from '@/shared/config'
 import { cn } from '@/shared/lib/utils'
@@ -20,7 +20,7 @@ import {
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/shared/ui/sheet'
 import { ThemeToggle } from '@/shared/ui/theme-toggle'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
-import { NAV_ITEMS, type NavItem } from './nav-items'
+import { navItemsForRole, ROLE_LABELS, type NavItem } from './nav-items'
 
 const COLLAPSED_KEY = 'app_sidebar_collapsed'
 
@@ -115,7 +115,7 @@ function UserMenu() {
           <span className="hidden text-left sm:block">
             <span className="block text-sm leading-tight font-medium">{user.fullname}</span>
             <span className="block text-xs leading-tight text-muted-foreground">
-              {user.role === 'ADMIN' ? 'Admin' : 'User'}
+              {ROLE_LABELS[user.role]}
             </span>
           </span>
         </button>
@@ -142,12 +142,9 @@ export function DashboardLayout() {
     () => localStorage.getItem(COLLAPSED_KEY) === '1',
   )
   const { pathname } = useLocation()
-  const isAdmin = useIsAdmin()
+  const user = useCurrentUser()
 
-  const visibleItems = useMemo(
-    () => NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin),
-    [isAdmin],
-  )
+  const visibleItems = useMemo(() => navItemsForRole(user?.role), [user?.role])
 
   const title =
     visibleItems.find((item) => isRouteActive(pathname, item.to))?.label ?? APP.name

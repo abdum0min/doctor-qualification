@@ -1,9 +1,10 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
-import { useAuthStore, useSession } from '@/features/auth'
+import { useAuthStore, useSession, type UserRole } from '@/features/auth'
 import { ROUTES } from '@/shared/config'
 import { tokenStorage } from '@/shared/lib/token-storage'
 import { Spinner } from '@/shared/ui/spinner'
+import { roleHome } from './role-home'
 
 function FullPageLoader() {
   return (
@@ -33,14 +34,28 @@ export function ProtectedRoute() {
   return <Outlet />
 }
 
-/** Login/Register — allaqachon kirgan foydalanuvchini bosh sahifaga qaytaradi. */
+/** Login/Register — allaqachon kirgan foydalanuvchini o'z sahifasiga qaytaradi. */
 export function GuestRoute() {
   return tokenStorage.get() ? <Navigate to={ROUTES.home} replace /> : <Outlet />
 }
 
-/** Rolga qarab cheklov. `ProtectedRoute` ichida ishlatiladi. */
-export function AdminRoute() {
+function RoleRoute({ role }: { role: UserRole }) {
   const user = useAuthStore((state) => state.user)
 
-  return user?.role === 'ADMIN' ? <Outlet /> : <Navigate to={ROUTES.home} replace />
+  return user?.role === role ? <Outlet /> : <Navigate to={roleHome(user?.role)} replace />
+}
+
+export function AdminRoute() {
+  return <RoleRoute role="ADMIN" />
+}
+
+export function DoctorRoute() {
+  return <RoleRoute role="DOCTOR" />
+}
+
+/** `/` — rolga qarab tegishli boshlang'ich sahifaga yo'naltiradi. */
+export function RoleHomeRedirect() {
+  const user = useAuthStore((state) => state.user)
+
+  return <Navigate to={roleHome(user?.role)} replace />
 }

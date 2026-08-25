@@ -1,13 +1,11 @@
 import 'dotenv/config';
 
-import { faker } from '@faker-js/faker';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
 
 import { PrismaClient } from '../src/generated/prisma/client';
 import { UserRole } from '../src/generated/prisma/enums';
 
-const DEMO_USER_COUNT = 8;
 const SALT_ROUNDS = 10;
 
 const connectionString =
@@ -17,58 +15,57 @@ const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString }),
 });
 
-/**
- * Seed idempotent: `upsert` ishlatilgani uchun bir necha marta ishga tushirsa
- * ham dublikat yaratmaydi va mavjud parollarni qayta yozmaydi.
- */
+const ACCOUNTS = [
+  {
+    fullname: 'Platforma administratori',
+    email: 'admin@doctorqualification.uz',
+    password: 'Admin123',
+    role: UserRole.ADMIN,
+  },
+  {
+    fullname: 'Abdullayev Anvar Anvarovich',
+    email: 'doctor@doctorqualification.uz',
+    password: 'Doctor123',
+    role: UserRole.DOCTOR,
+    profile: {
+      phone: '+998901234567',
+      workplace: '1-sonli shahar klinik shifoxonasi',
+      experienceYears: 8,
+    },
+  },
+];
+
+async function seedAccounts(): Promise<void> {
+  for (const account of ACCOUNTS) {
+    const password = await bcrypt.hash(account.password, SALT_ROUNDS);
+
+    await prisma.user.upsert({
+      where: { email: account.email },
+      update: { fullname: account.fullname, role: account.role },
+      create: {
+        fullname: account.fullname,
+        email: account.email,
+        password,
+        role: account.role,
+        ...(account.profile
+          ? { doctorProfile: { create: account.profile } }
+          : {}),
+      },
+    });
+  }
+}
+
 async function main(): Promise<void> {
   if (!connectionString) {
     throw new Error('DATABASE_URL (yoki DIRECT_URL) .env faylda topilmadi');
   }
 
-  const accounts = [
-    {
-      fullname: 'Admin User',
-      email: 'admin@example.com',
-      password: 'Admin123',
-      role: UserRole.ADMIN,
-    },
-    {
-      fullname: 'Demo User',
-      email: 'user@example.com',
-      password: 'User1234',
-      role: UserRole.USER,
-    },
-  ];
+  await seedAccounts();
 
-  for (const account of accounts) {
-    await prisma.user.upsert({
-      where: { email: account.email },
-      update: { fullname: account.fullname, role: account.role },
-      create: {
-        ...account,
-        password: await bcrypt.hash(account.password, SALT_ROUNDS),
-      },
-    });
+  console.log('✅ Seed tugadi');
+  for (const account of ACCOUNTS) {
+    console.log(`   ${account.role.padEnd(6)} ${account.email} / ${account.password}`);
   }
-
-  const demoPassword = await bcrypt.hash('User1234', SALT_ROUNDS);
-
-  await prisma.user.createMany({
-    data: Array.from({ length: DEMO_USER_COUNT }, () => ({
-      fullname: faker.person.fullName(),
-      email: faker.internet.email().toLowerCase(),
-      password: demoPassword,
-      role: UserRole.USER,
-    })),
-    skipDuplicates: true,
-  });
-
-  const total = await prisma.user.count();
-
-  console.log(`✅ Seed tugadi. Jami foydalanuvchilar: ${total}`);
-  console.log('   admin@example.com / Admin123');
-  console.log('   user@example.com  / User1234');
 }
 
 main()

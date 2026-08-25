@@ -13,6 +13,7 @@ import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { EnvironmentVariables, validateEnv } from './config/env.validation';
 import { AuthModule } from './modules/auth/auth.module';
+import { DoctorsModule } from './modules/doctors/doctors.module';
 import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 
@@ -39,8 +40,7 @@ import { PrismaModule } from './modules/prisma/prisma.module';
     PrismaModule,
     HealthModule,
     AuthModule,
-
-    // 👇 Yangi feature modullar shu yerga qo'shiladi
+    DoctorsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

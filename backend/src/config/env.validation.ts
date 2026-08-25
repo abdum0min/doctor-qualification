@@ -38,7 +38,7 @@ export class EnvironmentVariables {
   /** Swagger sarlavhasi va loglarda ko'rinadigan nom. */
   @IsString()
   @IsNotEmpty()
-  APP_NAME: string = 'Starter API';
+  APP_NAME: string = 'Doctor Qualification API';
 
   /** Vergul bilan ajratilgan ro'yxat: `https://app.com,https://admin.app.com` */
   @IsString()

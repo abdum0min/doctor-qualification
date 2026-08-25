@@ -1,7 +1,8 @@
 import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 
-import { HomePage } from '@/pages/home-page'
+import { AdminDashboardPage } from '@/pages/admin'
+import { DashboardPage } from '@/pages/dashboard-page'
 import { LoginPage } from '@/pages/login-page'
 import { NotFoundPage } from '@/pages/not-found-page'
 import { ProfilePage } from '@/pages/profile-page'
@@ -10,7 +11,13 @@ import { ROUTES } from '@/shared/config'
 import { Spinner } from '@/shared/ui/spinner'
 import { AuthLayout } from '../layouts/auth-layout'
 import { DashboardLayout } from '../layouts/dashboard-layout'
-import { GuestRoute, ProtectedRoute } from './guards'
+import {
+  AdminRoute,
+  DoctorRoute,
+  GuestRoute,
+  ProtectedRoute,
+  RoleHomeRedirect,
+} from './guards'
 
 // Design system barcha komponentlarni import qiladi — alohida chunk'ga ajratamiz,
 // shunda asosiy bundle'ga tushmaydi. Og'ir sahifalarni shu qolipda yuklang.
@@ -29,7 +36,6 @@ function RouteFallback() {
 export function AppRouter() {
   return (
     <Routes>
-      {/* Faqat tizimga kirmaganlar uchun */}
       <Route element={<GuestRoute />}>
         <Route element={<AuthLayout />}>
           <Route path={ROUTES.login} element={<LoginPage />} />
@@ -37,26 +43,26 @@ export function AppRouter() {
         </Route>
       </Route>
 
-      {/* Token talab qilinadigan sahifalar */}
       <Route element={<ProtectedRoute />}>
-        <Route element={<DashboardLayout />}>
-          <Route path={ROUTES.home} element={<HomePage />} />
-          <Route path={ROUTES.profile} element={<ProfilePage />} />
-          <Route
-            path={ROUTES.designSystem}
-            element={
-              <Suspense fallback={<RouteFallback />}>
-                <DesignSystemPage />
-              </Suspense>
-            }
-          />
+        <Route path={ROUTES.home} element={<RoleHomeRedirect />} />
 
-          {/*
-            Faqat admin uchun sahifalar shu qolipda qo'shiladi:
-            <Route element={<AdminRoute />}>
-              <Route path={ROUTES.users} element={<UsersPage />} />
-            </Route>
-          */}
+        <Route element={<DashboardLayout />}>
+          <Route element={<DoctorRoute />}>
+            <Route path={ROUTES.dashboard} element={<DashboardPage />} />
+            <Route path={ROUTES.profile} element={<ProfilePage />} />
+          </Route>
+
+          <Route element={<AdminRoute />}>
+            <Route path={ROUTES.admin} element={<AdminDashboardPage />} />
+            <Route
+              path={ROUTES.designSystem}
+              element={
+                <Suspense fallback={<RouteFallback />}>
+                  <DesignSystemPage />
+                </Suspense>
+              }
+            />
+          </Route>
         </Route>
       </Route>
 

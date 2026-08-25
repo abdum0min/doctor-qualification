@@ -54,7 +54,8 @@ export class AuthService {
           fullname: dto.fullname,
           email: dto.email,
           password: await bcrypt.hash(dto.password, SALT_ROUNDS),
-          role: UserRole.USER,
+          role: UserRole.DOCTOR,
+          doctorProfile: { create: {} },
         },
       })
       .catch((error: unknown) => {

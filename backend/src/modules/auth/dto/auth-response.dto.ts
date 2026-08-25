@@ -13,7 +13,7 @@ export class UserDto {
   @ApiProperty({ example: 'john@mail.com' })
   email: string;
 
-  @ApiProperty({ enum: UserRole, example: UserRole.USER })
+  @ApiProperty({ enum: UserRole, example: UserRole.DOCTOR })
   role: UserRole;
 
   @ApiProperty({ example: true })

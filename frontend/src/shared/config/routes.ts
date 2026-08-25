@@ -1,11 +1,15 @@
 export const ROUTES = {
-  // Ochiq — faqat mehmonlar uchun (GuestRoute)
+  // Ochiq
+  home: '/',
   login: '/login',
   register: '/register',
 
-  // Himoyalangan — token talab qilinadi (ProtectedRoute)
-  home: '/',
+  // Shifokor (DOCTOR)
+  dashboard: '/dashboard',
   profile: '/profile',
+
+  // Administrator (ADMIN)
+  admin: '/admin',
   designSystem: '/design-system',
 } as const
 

@@ -1,55 +1,49 @@
 import { useCurrentUser } from '@/features/auth'
-import { formatDate, getInitials } from '@/shared/lib/format'
+import { DoctorProfileForm, useDoctorProfile } from '@/features/doctors'
+import type { ApiError } from '@/shared/api'
+import { getInitials } from '@/shared/lib/format'
 import { Avatar, AvatarFallback } from '@/shared/ui/avatar'
+import { AsyncState } from '@/shared/ui/async-state'
 import { Badge } from '@/shared/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
-import { Separator } from '@/shared/ui/separator'
 
 export function ProfilePage() {
   const user = useCurrentUser()
-
-  if (!user) return null
-
-  const rows = [
-    { label: "To'liq ism", value: user.fullname },
-    { label: 'Email', value: user.email },
-    { label: 'Rol', value: user.role === 'ADMIN' ? 'Admin' : 'User' },
-    { label: 'Holat', value: user.isActive ? 'Faol' : 'Bloklangan' },
-    { label: "Ro'yxatdan o'tgan", value: formatDate(user.createdAt) },
-    { label: 'Oxirgi yangilanish', value: formatDate(user.updatedAt) },
-  ]
+  const { data: profile, isLoading, isError, error } = useDoctorProfile()
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <div className="space-y-1">
-        <h2 className="text-xl font-semibold tracking-tight">Profile</h2>
-        <p className="text-sm text-muted-foreground">Hisobingiz ma'lumotlari</p>
+        <h2 className="text-xl font-semibold tracking-tight">Profil</h2>
+        <p className="text-sm text-muted-foreground">
+          Sertifikatda ko'rinadigan ma'lumotlar shu yerdan olinadi.
+        </p>
       </div>
 
       <Card>
         <CardHeader className="flex-row items-center gap-4">
-          <Avatar className="size-16">
-            <AvatarFallback className="text-lg">{getInitials(user.fullname)}</AvatarFallback>
+          <Avatar className="size-14">
+            <AvatarFallback className="bg-primary/10 text-primary">
+              {getInitials(profile?.fullname ?? user?.fullname ?? '')}
+            </AvatarFallback>
           </Avatar>
-          <div className="space-y-1">
-            <CardTitle className="text-lg">{user.fullname}</CardTitle>
-            <CardDescription>{user.email}</CardDescription>
-            <Badge variant={user.role === 'ADMIN' ? 'default' : 'secondary'}>
-              {user.role === 'ADMIN' ? 'Admin' : 'User'}
-            </Badge>
+          <div className="min-w-0 space-y-1">
+            <CardTitle className="truncate text-lg">
+              {profile?.fullname ?? user?.fullname}
+            </CardTitle>
+            <CardDescription className="truncate">{user?.email}</CardDescription>
+            <Badge variant="info">Shifokor</Badge>
           </div>
         </CardHeader>
 
         <CardContent>
-          <Separator className="mb-4" />
-          <dl className="space-y-3">
-            {rows.map((row) => (
-              <div key={row.label} className="flex justify-between gap-4 text-sm">
-                <dt className="text-muted-foreground">{row.label}</dt>
-                <dd className="text-right font-medium">{row.value}</dd>
-              </div>
-            ))}
-          </dl>
+          <AsyncState
+            isLoading={isLoading}
+            isError={isError}
+            errorMessage={(error as ApiError | null)?.message}
+          >
+            {profile && <DoctorProfileForm profile={profile} />}
+          </AsyncState>
         </CardContent>
       </Card>
     </div>

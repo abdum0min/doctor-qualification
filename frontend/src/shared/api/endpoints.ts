@@ -9,11 +9,8 @@ export const ENDPOINTS = {
     logout: '/auth/logout',
     me: '/auth/me',
   },
+  doctors: {
+    me: '/doctors/me',
+  },
   health: '/health',
-
-  // 👇 Yangi resurslar shu qolipda qo'shiladi:
-  // posts: {
-  //   root: '/posts',
-  //   byId: (id: number) => `/posts/${id}`,
-  // },
 } as const
