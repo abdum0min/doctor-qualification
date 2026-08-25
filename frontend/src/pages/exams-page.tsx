@@ -14,10 +14,13 @@ import { Spinner } from '@/shared/ui/spinner'
 
 export function ExamsPage() {
   const { data: profile } = useDoctorProfile()
-  const [specialtyId, setSpecialtyId] = useState<number | null>(null)
+  // `undefined` — shifokor hali tanlamagan, `null` — "Barcha mutaxassisliklar".
+  // Ikkisi farqlanmasa, hammasini tanlash o'z yo'nalishiga qaytib ketadi.
+  const [specialtyId, setSpecialtyId] = useState<number | null | undefined>()
 
   // Standart holatda shifokorning o'z yo'nalishi ko'rsatiladi.
-  const activeSpecialtyId = specialtyId ?? profile?.specialty?.id ?? null
+  const activeSpecialtyId =
+    specialtyId === undefined ? (profile?.specialty?.id ?? null) : specialtyId
   const { data, isLoading, isError, error } = useActiveExams(
     activeSpecialtyId ?? undefined,
   )
@@ -38,7 +41,7 @@ export function ExamsPage() {
             value={activeSpecialtyId}
             onChange={setSpecialtyId}
             placeholder="Barcha mutaxassisliklar"
-              clearLabel="Barcha mutaxassisliklar"
+            clearLabel="Barcha mutaxassisliklar"
           />
         </div>
       </div>
