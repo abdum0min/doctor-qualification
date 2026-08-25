@@ -4,7 +4,6 @@ import { Clock, FileText, Target } from 'lucide-react'
 import { useStartAttempt } from '@/features/attempts'
 import { useDoctorProfile } from '@/features/doctors'
 import { useActiveExams, type Exam } from '@/features/exams'
-import { DIFFICULTY_LABELS } from '@/features/questions'
 import { SpecialtySelect } from '@/features/specialties'
 import type { ApiError } from '@/shared/api'
 import { AsyncState } from '@/shared/ui/async-state'
@@ -71,12 +70,9 @@ function ExamCard({ exam }: { exam: Exam }) {
   return (
     <Card className="flex flex-col">
       <CardHeader className="flex-1 gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline">{exam.specialty.name}</Badge>
-          {exam.difficulty && (
-            <Badge variant="info">{DIFFICULTY_LABELS[exam.difficulty]}</Badge>
-          )}
-        </div>
+        <Badge variant="outline" className="w-fit">
+          {exam.specialty.name}
+        </Badge>
         <CardTitle className="text-base leading-snug">{exam.title}</CardTitle>
         {exam.description && (
           <CardDescription className="line-clamp-3">{exam.description}</CardDescription>

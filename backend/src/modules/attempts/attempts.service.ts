@@ -144,8 +144,6 @@ export class AttemptsService {
       where: { id: examId, isActive: true, specialty: { isActive: true } },
       select: {
         id: true,
-        specialtyId: true,
-        difficulty: true,
         questionCount: true,
         timeLimitMinutes: true,
         passingScore: true,
@@ -176,11 +174,7 @@ export class AttemptsService {
       return this.findOne(userId, existing.id);
     }
 
-    const questions = await this.sampleQuestions(
-      exam.specialtyId,
-      exam.difficulty,
-      exam.questionCount,
-    );
+    const questions = await this.sampleQuestions(exam.id, exam.questionCount);
 
     const now = new Date();
     const attempt = await this.prisma.examAttempt.create({
@@ -399,17 +393,10 @@ export class AttemptsService {
     }
   }
 
-  private async sampleQuestions(
-    specialtyId: number,
-    difficulty: Difficulty | null,
-    count: number,
-  ) {
+  /** Har bir urinishda imtihonning o'z savollaridan tasodifiy tanlov beriladi. */
+  private async sampleQuestions(examId: number, count: number) {
     const candidates = await this.prisma.question.findMany({
-      where: {
-        specialtyId,
-        isActive: true,
-        ...(difficulty ? { difficulty } : {}),
-      },
+      where: { examId, isActive: true },
       select: {
         id: true,
         text: true,

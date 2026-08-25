@@ -19,8 +19,9 @@ export const ENDPOINTS = {
     byId: (id: number) => `/specialties/${id}`,
   },
   questions: {
-    root: '/questions',
-    byId: (id: number) => `/questions/${id}`,
+    byExam: (examId: number) => `/admin/exams/${examId}/questions`,
+    byId: (examId: number, id: number) =>
+      `/admin/exams/${examId}/questions/${id}`,
   },
   exams: {
     root: '/exams',

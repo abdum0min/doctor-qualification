@@ -18,8 +18,8 @@ export const ROUTES = {
   admin: '/admin',
   adminDoctors: '/admin/doctors',
   adminSpecialties: '/admin/specialties',
-  adminQuestions: '/admin/questions',
   adminExams: '/admin/exams',
+  adminExamQuestions: '/admin/exams/:examId/questions',
   adminAttempts: '/admin/attempts',
   adminCertificates: '/admin/certificates',
   designSystem: '/design-system',
@@ -36,4 +36,5 @@ export function roleHome(role: UserRole | undefined): string {
 export const buildRoute = {
   attempt: (attemptId: number) => `/attempts/${attemptId}`,
   verify: (certificateId: string) => `/verify/${certificateId}`,
+  examQuestions: (examId: number) => `/admin/exams/${examId}/questions`,
 } as const

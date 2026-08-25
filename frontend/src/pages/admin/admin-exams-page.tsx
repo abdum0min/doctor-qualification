@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Pencil, Plus, TriangleAlert } from 'lucide-react'
+import { FileQuestion, Pencil, Plus, TriangleAlert } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 import { ExamDialog, useAdminExams, type AdminExam } from '@/features/exams'
-import { DIFFICULTY_LABELS } from '@/features/questions'
 import { SpecialtySelect } from '@/features/specialties'
 import type { ApiError } from '@/shared/api'
+import { buildRoute } from '@/shared/config'
 import { AsyncState } from '@/shared/ui/async-state'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
@@ -38,18 +39,8 @@ const columns: Column<AdminExam>[] = [
     ),
   },
   {
-    key: 'difficulty',
-    header: 'Daraja',
-    cell: (row) =>
-      row.difficulty ? (
-        <Badge variant="info">{DIFFICULTY_LABELS[row.difficulty]}</Badge>
-      ) : (
-        <span className="text-muted-foreground">Aralash</span>
-      ),
-  },
-  {
     key: 'availableQuestions',
-    header: 'Mavjud savollar',
+    header: 'Savollar',
     className: 'text-right',
     cell: (row) =>
       row.availableQuestions < row.questionCount ? (
@@ -69,6 +60,12 @@ const columns: Column<AdminExam>[] = [
       ),
   },
   {
+    key: 'attemptsCount',
+    header: 'Urinishlar',
+    className: 'text-right tabular-nums',
+    cell: (row) => row.attemptsCount,
+  },
+  {
     key: 'isActive',
     header: 'Holat',
     cell: (row) => (
@@ -80,13 +77,21 @@ const columns: Column<AdminExam>[] = [
   {
     key: 'actions',
     header: '',
-    className: 'w-12 text-right',
+    className: 'w-24 text-right',
     cell: (row) => (
-      <ExamDialog exam={row}>
-        <Button variant="ghost" size="icon" aria-label="Tahrirlash">
-          <Pencil />
+      <div className="flex justify-end gap-1">
+        <Button asChild variant="ghost" size="icon" aria-label="Savollar">
+          <Link to={buildRoute.examQuestions(row.id)}>
+            <FileQuestion />
+          </Link>
         </Button>
-      </ExamDialog>
+
+        <ExamDialog exam={row}>
+          <Button variant="ghost" size="icon" aria-label="Tahrirlash">
+            <Pencil />
+          </Button>
+        </ExamDialog>
+      </div>
     ),
   },
 ]

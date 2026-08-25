@@ -14,6 +14,8 @@ export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
   EXPERT: 'Ekspert',
 }
 
+export type QuestionStatus = 'active' | 'inactive'
+
 export interface QuestionOption {
   id: number
   text: string
@@ -22,20 +24,18 @@ export interface QuestionOption {
 
 export interface Question {
   id: number
+  examId: number
   text: string
   difficulty: Difficulty
+  position: number
   isActive: boolean
-  specialty: { id: number; name: string }
   options: QuestionOption[]
   createdAt: string
   updatedAt: string
 }
 
-export type QuestionStatus = 'active' | 'inactive'
-
 export interface QuestionFilters {
   search?: string
-  specialtyId?: number
   difficulty?: Difficulty
   status?: QuestionStatus
 }

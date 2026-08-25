@@ -6,9 +6,7 @@ import {
   IsArray,
   IsBoolean,
   IsEnum,
-  IsInt,
   IsOptional,
-  IsPositive,
   IsString,
   MaxLength,
   MinLength,
@@ -34,12 +32,8 @@ export class QuestionOptionInput {
   isCorrect: boolean;
 }
 
+/** Imtihon `examId` yo'l parametridan olinadi — tanada takrorlanmaydi. */
 export class CreateQuestionDto {
-  @ApiProperty({ example: 3 })
-  @IsInt()
-  @IsPositive()
-  specialtyId: number;
-
   @ApiProperty({
     example: 'Miokard infarktining asosiy belgisi qaysi?',
     maxLength: 1000,

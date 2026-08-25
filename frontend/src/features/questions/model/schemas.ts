@@ -6,10 +6,6 @@ export const MIN_OPTIONS = 2
 export const MAX_OPTIONS = 6
 
 export const questionSchema = z.object({
-  specialtyId: z
-    .number({ message: 'Mutaxassislikni tanlang' })
-    .int()
-    .positive('Mutaxassislikni tanlang'),
   text: z
     .string()
     .trim()
@@ -31,7 +27,6 @@ export const questionSchema = z.object({
 export type QuestionValues = z.infer<typeof questionSchema>
 
 export interface QuestionPayload {
-  specialtyId: number
   text: string
   difficulty: QuestionValues['difficulty']
   isActive: boolean
@@ -40,7 +35,6 @@ export interface QuestionPayload {
 
 export function toQuestionPayload(values: QuestionValues): QuestionPayload {
   return {
-    specialtyId: values.specialtyId,
     text: values.text,
     difficulty: values.difficulty,
     isActive: values.isActive,

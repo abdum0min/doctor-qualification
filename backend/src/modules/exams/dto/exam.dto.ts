@@ -1,7 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { Difficulty } from 'src/generated/prisma/enums';
-
 class ExamSpecialtyDto {
   @ApiProperty({ example: 3 })
   id: number;
@@ -29,9 +27,6 @@ export class ExamDto {
   @ApiProperty({ example: 70 })
   passingScore: number;
 
-  @ApiProperty({ enum: Difficulty, nullable: true })
-  difficulty: Difficulty | null;
-
   @ApiProperty({ example: true })
   isActive: boolean;
 
@@ -40,8 +35,14 @@ export class ExamDto {
 }
 
 export class AdminExamDto extends ExamDto {
-  @ApiProperty({ example: 38, description: 'Sozlamaga mos faol savollar soni' })
+  @ApiProperty({
+    example: 38,
+    description: 'Imtihonga biriktirilgan faol savollar',
+  })
   availableQuestions: number;
+
+  @ApiProperty({ example: 12 })
+  attemptsCount: number;
 
   @ApiProperty({ example: '2026-01-01T10:00:00.000Z' })
   createdAt: Date;

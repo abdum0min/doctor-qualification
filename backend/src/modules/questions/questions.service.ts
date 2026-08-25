@@ -9,7 +9,6 @@ import { buildPaginated, toSkipTake } from 'src/common/utils/pagination.util';
 import { Prisma } from 'src/generated/prisma/client';
 import { Difficulty } from 'src/generated/prisma/enums';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
-import { SpecialtiesService } from 'src/modules/specialties/specialties.service';
 
 import {
   CreateQuestionDto,
@@ -26,10 +25,11 @@ export interface QuestionOptionView {
 
 export interface QuestionView {
   id: number;
+  examId: number;
   text: string;
   difficulty: Difficulty;
+  position: number;
   isActive: boolean;
-  specialty: { id: number; name: string };
   options: QuestionOptionView[];
   createdAt: Date;
   updatedAt: Date;
@@ -38,12 +38,13 @@ export interface QuestionView {
 /** Admin ko'rinishida to'g'ri javob ochib beriladi — global `omit` bekor qilinadi. */
 const adminSelect = {
   id: true,
+  examId: true,
   text: true,
   difficulty: true,
+  position: true,
   isActive: true,
   createdAt: true,
   updatedAt: true,
-  specialty: { select: { id: true, name: true } },
   options: {
     select: { id: true, text: true, isCorrect: true },
     orderBy: { position: 'asc' },
@@ -52,20 +53,22 @@ const adminSelect = {
 
 @Injectable()
 export class QuestionsService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly specialtiesService: SpecialtiesService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
-  async findMany(query: QuestionQueryDto): Promise<Paginated<QuestionView>> {
-    const where = buildWhere(query);
+  async findMany(
+    examId: number,
+    query: QuestionQueryDto,
+  ): Promise<Paginated<QuestionView>> {
+    await this.ensureExamExists(examId);
+
+    const where = buildWhere(examId, query);
 
     const [rows, total] = await Promise.all([
       this.prisma.question.findMany({
         where,
         select: adminSelect,
         ...toSkipTake(query),
-        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        orderBy: { position: 'asc' },
       }),
       this.prisma.question.count({ where }),
     ]);
@@ -73,9 +76,9 @@ export class QuestionsService {
     return buildPaginated(rows, total, query);
   }
 
-  async findOne(id: number): Promise<QuestionView> {
-    const question = await this.prisma.question.findUnique({
-      where: { id },
+  async findOne(examId: number, id: number): Promise<QuestionView> {
+    const question = await this.prisma.question.findFirst({
+      where: { id, examId },
       select: adminSelect,
     });
 
@@ -86,15 +89,22 @@ export class QuestionsService {
     return question;
   }
 
-  async create(dto: CreateQuestionDto): Promise<QuestionView> {
-    await this.specialtiesService.ensureActive(dto.specialtyId);
+  async create(examId: number, dto: CreateQuestionDto): Promise<QuestionView> {
+    await this.ensureExamExists(examId);
+
+    const last = await this.prisma.question.findFirst({
+      where: { examId },
+      select: { position: true },
+      orderBy: { position: 'desc' },
+    });
 
     return this.prisma.question.create({
       data: {
-        specialtyId: dto.specialtyId,
+        examId,
         text: dto.text,
         difficulty: dto.difficulty,
         isActive: dto.isActive ?? true,
+        position: (last?.position ?? -1) + 1,
         options: { create: toOptionRows(dto.options) },
       },
       select: adminSelect,
@@ -105,17 +115,16 @@ export class QuestionsService {
    * Variantlar to'liq almashtiriladi — qisman yangilash tartib va
    * "aynan bitta to'g'ri javob" qoidasini buzishi mumkin.
    */
-  async update(id: number, dto: UpdateQuestionDto): Promise<QuestionView> {
-    const { options, specialtyId, ...fields } = dto;
-
-    if (specialtyId) {
-      await this.specialtiesService.ensureActive(specialtyId);
-    }
-
-    const current = await this.ensureExists(id);
+  async update(
+    examId: number,
+    id: number,
+    dto: UpdateQuestionDto,
+  ): Promise<QuestionView> {
+    const { options, ...fields } = dto;
+    const current = await this.findOne(examId, id);
 
     if (current.isActive && fields.isActive === false) {
-      await this.ensureExamsStaySatisfiable(current);
+      await this.ensureExamStaysSatisfiable(examId);
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -127,7 +136,6 @@ export class QuestionsService {
         where: { id },
         data: {
           ...fields,
-          ...(specialtyId ? { specialtyId } : {}),
           ...(options ? { options: { create: toOptionRows(options) } } : {}),
         },
         select: adminSelect,
@@ -135,11 +143,11 @@ export class QuestionsService {
     });
   }
 
-  async remove(id: number): Promise<null> {
-    const question = await this.ensureExists(id);
+  async remove(examId: number, id: number): Promise<null> {
+    const question = await this.findOne(examId, id);
 
     if (question.isActive) {
-      await this.ensureExamsStaySatisfiable(question);
+      await this.ensureExamStaysSatisfiable(examId);
     }
 
     await this.prisma.question.delete({ where: { id } });
@@ -148,65 +156,40 @@ export class QuestionsService {
   }
 
   /**
-   * Faol savolni olib tashlash mavjud imtihonni ishga tushib bo'lmaydigan
-   * holatga keltirmasligi kerak — sozlama va savol bazasi doim mos turadi.
+   * Faol savolni olib tashlash imtihonni ishga tushib bo'lmaydigan holatga
+   * keltirmasligi kerak — sozlama va savollar soni doim mos turadi.
    */
-  private async ensureExamsStaySatisfiable(question: {
-    specialtyId: number;
-    difficulty: Difficulty;
-  }): Promise<void> {
-    const exams = await this.prisma.exam.findMany({
-      where: {
-        specialtyId: question.specialtyId,
-        isActive: true,
-        OR: [{ difficulty: null }, { difficulty: question.difficulty }],
-      },
-      select: { title: true, questionCount: true, difficulty: true },
+  private async ensureExamStaysSatisfiable(examId: number): Promise<void> {
+    const exam = await this.prisma.exam.findUniqueOrThrow({
+      where: { id: examId },
+      select: { title: true, questionCount: true, isActive: true },
     });
 
-    if (exams.length === 0) {
+    if (!exam.isActive) {
       return;
     }
 
-    const blocked = await Promise.all(
-      exams.map(async (exam) => {
-        const remaining =
-          (await this.prisma.question.count({
-            where: {
-              specialtyId: question.specialtyId,
-              isActive: true,
-              ...(exam.difficulty ? { difficulty: exam.difficulty } : {}),
-            },
-          })) - 1;
+    const remaining =
+      (await this.prisma.question.count({
+        where: { examId, isActive: true },
+      })) - 1;
 
-        return remaining < exam.questionCount ? exam : null;
-      }),
-    );
-
-    const broken = blocked.find((exam) => exam !== null);
-
-    if (broken) {
+    if (remaining < exam.questionCount) {
       throw new BadRequestException(
-        `"${broken.title}" needs ${broken.questionCount} questions — deactivate that exam or add more questions first`,
+        `"${exam.title}" needs ${exam.questionCount} questions — lower the question count or deactivate the exam first`,
       );
     }
   }
 
-  private async ensureExists(id: number): Promise<{
-    specialtyId: number;
-    difficulty: Difficulty;
-    isActive: boolean;
-  }> {
-    const exists = await this.prisma.question.findUnique({
-      where: { id },
-      select: { specialtyId: true, difficulty: true, isActive: true },
+  private async ensureExamExists(examId: number): Promise<void> {
+    const exam = await this.prisma.exam.findUnique({
+      where: { id: examId },
+      select: { id: true },
     });
 
-    if (!exists) {
-      throw new NotFoundException('Question not found');
+    if (!exam) {
+      throw new NotFoundException('Exam not found');
     }
-
-    return exists;
   }
 }
 
@@ -218,9 +201,12 @@ function toOptionRows(options: QuestionOptionInput[]) {
   }));
 }
 
-function buildWhere(query: QuestionQueryDto): Prisma.QuestionWhereInput {
+function buildWhere(
+  examId: number,
+  query: QuestionQueryDto,
+): Prisma.QuestionWhereInput {
   return {
-    ...(query.specialtyId ? { specialtyId: query.specialtyId } : {}),
+    examId,
     ...(query.difficulty ? { difficulty: query.difficulty } : {}),
     ...(query.status
       ? { isActive: query.status === QuestionStatus.Active }

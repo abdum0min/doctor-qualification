@@ -104,35 +104,31 @@ export class StatisticsService {
    * so'rov — mutaxassisliklar soni ortganda ham N+1 bo'lmaydi.
    */
   async bySpecialty(): Promise<SpecialtyStatistics[]> {
-    const [specialties, questionCounts, examCounts, attempts] =
-      await Promise.all([
-        this.prisma.specialty.findMany({
-          select: {
-            id: true,
-            name: true,
-            _count: { select: { doctorProfiles: true } },
-          },
-          orderBy: { name: 'asc' },
-        }),
-        this.prisma.question.groupBy({
-          by: ['specialtyId'],
-          where: { isActive: true },
-          _count: { _all: true },
-        }),
-        this.prisma.exam.groupBy({
-          by: ['specialtyId'],
-          where: { isActive: true },
-          _count: { _all: true },
-        }),
-        this.prisma.examAttempt.findMany({
-          where: COMPLETED,
-          select: {
-            score: true,
-            passed: true,
-            exam: { select: { specialtyId: true } },
-          },
-        }),
-      ]);
+    const [specialties, exams, attempts] = await Promise.all([
+      this.prisma.specialty.findMany({
+        select: {
+          id: true,
+          name: true,
+          _count: { select: { doctorProfiles: true } },
+        },
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.exam.findMany({
+        where: { isActive: true },
+        select: {
+          specialtyId: true,
+          _count: { select: { questions: true } },
+        },
+      }),
+      this.prisma.examAttempt.findMany({
+        where: COMPLETED,
+        select: {
+          score: true,
+          passed: true,
+          exam: { select: { specialtyId: true } },
+        },
+      }),
+    ]);
 
     return specialties.map((specialty) => {
       const own = attempts.filter(
@@ -146,8 +142,11 @@ export class StatisticsService {
         specialtyId: specialty.id,
         name: specialty.name,
         doctorsCount: specialty._count.doctorProfiles,
-        questionsCount: countFor(questionCounts, specialty.id),
-        examsCount: countFor(examCounts, specialty.id),
+        questionsCount: examsOf(exams, specialty.id).reduce(
+          (total, exam) => total + exam._count.questions,
+          0,
+        ),
+        examsCount: examsOf(exams, specialty.id).length,
         attemptsCount: own.length,
         passedCount: own.filter((attempt) => attempt.passed).length,
         averageScore: scores.length
@@ -198,13 +197,11 @@ export class StatisticsService {
   }
 }
 
-function countFor(
-  groups: { specialtyId: number; _count: { _all: number } }[],
+function examsOf<T extends { specialtyId: number }>(
+  exams: T[],
   specialtyId: number,
-): number {
-  return (
-    groups.find((group) => group.specialtyId === specialtyId)?._count._all ?? 0
-  );
+): T[] {
+  return exams.filter((exam) => exam.specialtyId === specialtyId);
 }
 
 function roundOrNull(value: number | null): number | null {

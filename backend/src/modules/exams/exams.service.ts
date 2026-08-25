@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 
 import { Prisma } from 'src/generated/prisma/client';
-import { Difficulty } from 'src/generated/prisma/enums';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
 import { SpecialtiesService } from 'src/modules/specialties/specialties.service';
 
@@ -20,14 +19,14 @@ export interface ExamView {
   questionCount: number;
   timeLimitMinutes: number;
   passingScore: number;
-  difficulty: Difficulty | null;
   isActive: boolean;
   specialty: { id: number; name: string };
 }
 
 export interface AdminExamView extends ExamView {
-  /** Sozlamaga mos faol savollar soni — imkonsiz konfiguratsiyani ko'rsatadi. */
+  /** Imtihonga biriktirilgan faol savollar soni. */
   availableQuestions: number;
+  attemptsCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,7 +38,6 @@ const examSelect = {
   questionCount: true,
   timeLimitMinutes: true,
   passingScore: true,
-  difficulty: true,
   isActive: true,
   specialty: { select: { id: true, name: true } },
 } satisfies Prisma.ExamSelect;
@@ -51,6 +49,7 @@ export class ExamsService {
     private readonly specialtiesService: SpecialtiesService,
   ) {}
 
+  /** Savoli yetmaydigan imtihon shifokorga ko'rsatilmaydi. */
   findActive(query: ExamQueryDto): Promise<ExamView[]> {
     return this.prisma.exam.findMany({
       where: {
@@ -64,33 +63,26 @@ export class ExamsService {
   }
 
   async findAll(query: ExamQueryDto): Promise<AdminExamView[]> {
-    const [exams, questionCounts] = await Promise.all([
-      this.prisma.exam.findMany({
-        where: {
-          ...(query.specialtyId ? { specialtyId: query.specialtyId } : {}),
-          ...(query.status
-            ? { isActive: query.status === ExamStatus.Active }
-            : {}),
-        },
-        select: { ...examSelect, createdAt: true, updatedAt: true },
-        orderBy: [{ specialtyId: 'asc' }, { title: 'asc' }],
-      }),
-      this.prisma.question.groupBy({
-        by: ['specialtyId', 'difficulty'],
-        where: { isActive: true },
-        _count: { _all: true },
-      }),
-    ]);
+    const exams = await this.prisma.exam.findMany({
+      where: {
+        ...(query.specialtyId ? { specialtyId: query.specialtyId } : {}),
+        ...(query.status
+          ? { isActive: query.status === ExamStatus.Active }
+          : {}),
+      },
+      select: {
+        ...examSelect,
+        createdAt: true,
+        updatedAt: true,
+        _count: { select: { questions: true, attempts: true } },
+      },
+      orderBy: [{ specialtyId: 'asc' }, { title: 'asc' }],
+    });
 
-    return exams.map((exam) => ({
+    return exams.map(({ _count, ...exam }) => ({
       ...exam,
-      availableQuestions: questionCounts
-        .filter(
-          (row) =>
-            row.specialtyId === exam.specialty.id &&
-            (exam.difficulty === null || row.difficulty === exam.difficulty),
-        )
-        .reduce((total, row) => total + row._count._all, 0),
+      availableQuestions: _count.questions,
+      attemptsCount: _count.attempts,
     }));
   }
 
@@ -107,16 +99,15 @@ export class ExamsService {
     return exam;
   }
 
+  /**
+   * Yangi imtihon savolsiz yaratiladi — admin uni ochib savollarni biriktiradi.
+   * Shuning uchun bu yerda savollar soni tekshirilmaydi.
+   */
   async create(dto: CreateExamDto): Promise<ExamView> {
     await this.specialtiesService.ensureActive(dto.specialtyId);
-    await this.ensureEnoughQuestions(
-      dto.specialtyId,
-      dto.difficulty ?? null,
-      dto.questionCount,
-    );
 
     return this.prisma.exam.create({
-      data: { ...dto, isActive: dto.isActive ?? true },
+      data: { ...dto, isActive: dto.isActive ?? false },
       select: examSelect,
     });
   }
@@ -124,7 +115,7 @@ export class ExamsService {
   async update(id: number, dto: UpdateExamDto): Promise<ExamView> {
     const current = await this.prisma.exam.findUnique({
       where: { id },
-      select: { specialtyId: true, difficulty: true, questionCount: true },
+      select: { specialtyId: true, questionCount: true, isActive: true },
     });
 
     if (!current) {
@@ -135,11 +126,13 @@ export class ExamsService {
       await this.specialtiesService.ensureActive(dto.specialtyId);
     }
 
-    await this.ensureEnoughQuestions(
-      dto.specialtyId ?? current.specialtyId,
-      dto.difficulty === undefined ? current.difficulty : dto.difficulty,
-      dto.questionCount ?? current.questionCount,
-    );
+    const questionCount = dto.questionCount ?? current.questionCount;
+    const willBeActive = dto.isActive ?? current.isActive;
+
+    // Faol imtihon o'z savollaridan ko'p savol so'ray olmaydi.
+    if (willBeActive) {
+      await this.ensureEnoughQuestions(id, questionCount);
+    }
 
     return this.prisma.exam.update({
       where: { id },
@@ -148,33 +141,19 @@ export class ExamsService {
     });
   }
 
-  countAvailableQuestions(
-    specialtyId: number,
-    difficulty: Difficulty | null,
-  ): Promise<number> {
-    return this.prisma.question.count({
-      where: {
-        specialtyId,
-        isActive: true,
-        ...(difficulty ? { difficulty } : {}),
-      },
-    });
+  countQuestions(examId: number): Promise<number> {
+    return this.prisma.question.count({ where: { examId, isActive: true } });
   }
 
-  /** Savollar yetmaydigan sozlama saqlanmaydi — imtihon boshlanmay qolmasin. */
   private async ensureEnoughQuestions(
-    specialtyId: number,
-    difficulty: Difficulty | null,
+    examId: number,
     questionCount: number,
   ): Promise<void> {
-    const available = await this.countAvailableQuestions(
-      specialtyId,
-      difficulty,
-    );
+    const available = await this.countQuestions(examId);
 
     if (available < questionCount) {
       throw new BadRequestException(
-        `Only ${available} active questions match this configuration, but ${questionCount} are required`,
+        `This exam has ${available} active questions but needs ${questionCount} — add questions or lower the count`,
       );
     }
   }

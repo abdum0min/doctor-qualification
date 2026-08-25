@@ -16,6 +16,7 @@ export interface SpecialtyView {
 
 export interface AdminSpecialtyView extends SpecialtyView {
   doctorsCount: number;
+  examsCount: number;
   questionsCount: number;
   createdAt: Date;
   updatedAt: Date;
@@ -47,15 +48,21 @@ export class SpecialtiesService {
         ...publicSelect,
         createdAt: true,
         updatedAt: true,
-        _count: { select: { doctorProfiles: true, questions: true } },
+        _count: { select: { doctorProfiles: true, exams: true } },
+        // Savollar imtihonga tegishli, shuning uchun ular imtihonlar orqali sanaladi.
+        exams: { select: { _count: { select: { questions: true } } } },
       },
       orderBy: { name: 'asc' },
     });
 
-    return specialties.map(({ _count, ...specialty }) => ({
+    return specialties.map(({ _count, exams, ...specialty }) => ({
       ...specialty,
       doctorsCount: _count.doctorProfiles,
-      questionsCount: _count.questions,
+      examsCount: _count.exams,
+      questionsCount: exams.reduce(
+        (total, exam) => total + exam._count.questions,
+        0,
+      ),
     }));
   }
 

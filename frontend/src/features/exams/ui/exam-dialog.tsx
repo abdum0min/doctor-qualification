@@ -2,7 +2,6 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 
-import { DifficultySelect } from '@/features/questions'
 import { SpecialtySelect } from '@/features/specialties'
 import { Button } from '@/shared/ui/button'
 import {
@@ -31,7 +30,6 @@ const EMPTY_VALUES: ExamValues = {
   questionCount: '20',
   timeLimitMinutes: '30',
   passingScore: '70',
-  difficulty: null,
   isActive: true,
 }
 
@@ -43,7 +41,6 @@ function toFormValues(exam: AdminExam): ExamValues {
     questionCount: String(exam.questionCount),
     timeLimitMinutes: String(exam.timeLimitMinutes),
     passingScore: String(exam.passingScore),
-    difficulty: exam.difficulty,
     isActive: exam.isActive,
   }
 }
@@ -124,48 +121,25 @@ export function ExamDialog({ exam, children }: ExamDialogProps) {
             />
           </FormField>
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <FormField
-              id="specialtyId"
-              label="Mutaxassislik"
-              error={errors.specialtyId?.message}
-              required
-            >
-              <Controller
-                control={control}
-                name="specialtyId"
-                render={({ field }) => (
-                  <SpecialtySelect
-                    id="specialtyId"
-                    value={field.value || null}
-                    onChange={(value) => field.onChange(value ?? 0)}
-                    aria-invalid={Boolean(errors.specialtyId)}
-                  />
-                )}
-              />
-            </FormField>
-
-            <FormField
-              id="difficulty"
-              label="Daraja"
-              error={errors.difficulty?.message}
-              hint="Bo'sh qoldirilsa barcha darajalar aralashadi"
-            >
-              <Controller
-                control={control}
-                name="difficulty"
-                render={({ field }) => (
-                  <DifficultySelect
-                    id="difficulty"
-                    clearable
-                    value={field.value}
-                    onChange={field.onChange}
-                    placeholder="Barcha darajalar"
-                  />
-                )}
-              />
-            </FormField>
-          </div>
+          <FormField
+            id="specialtyId"
+            label="Mutaxassislik"
+            error={errors.specialtyId?.message}
+            required
+          >
+            <Controller
+              control={control}
+              name="specialtyId"
+              render={({ field }) => (
+                <SpecialtySelect
+                  id="specialtyId"
+                  value={field.value || null}
+                  onChange={(value) => field.onChange(value ?? 0)}
+                  aria-invalid={Boolean(errors.specialtyId)}
+                />
+              )}
+            />
+          </FormField>
 
           <div className="grid gap-5 sm:grid-cols-3">
             <FormField
@@ -215,7 +189,8 @@ export function ExamDialog({ exam, children }: ExamDialogProps) {
             <div className="space-y-0.5">
               <Label htmlFor="isActive">Faol</Label>
               <p className="text-xs text-muted-foreground">
-                Nofaol imtihon shifokorlarga ko'rinmaydi.
+                Savollar biriktirilgach imtihonni faollashtiring — nofaol imtihon
+                shifokorlarga ko'rinmaydi.
               </p>
             </div>
             <Controller

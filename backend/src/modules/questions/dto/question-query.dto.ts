@@ -1,6 +1,5 @@
 import { ApiPropertyOptional, PickType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsPositive } from 'class-validator';
+import { IsEnum, IsOptional } from 'class-validator';
 
 import { PageQueryDto } from 'src/common/dto/pagination-query.dto';
 import { Difficulty } from 'src/generated/prisma/enums';
@@ -20,13 +19,6 @@ export class QuestionQueryDto extends PickType(PageQueryDto, [
   'limit',
   'search',
 ] as const) {
-  @ApiPropertyOptional({ example: 3 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @IsPositive()
-  specialtyId?: number;
-
   @ApiPropertyOptional({ enum: Difficulty })
   @IsOptional()
   @IsEnum(Difficulty)

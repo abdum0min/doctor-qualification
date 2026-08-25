@@ -11,6 +11,7 @@ export const examKeys = {
   active: (specialtyId?: number) => [...examKeys.all, 'active', specialtyId ?? 0] as const,
   admin: (specialtyId?: number) => [...examKeys.all, 'admin', specialtyId ?? 0] as const,
   detail: (id: number) => [...examKeys.all, 'detail', id] as const,
+  adminDetail: (id: number) => [...examKeys.all, 'admin', 'detail', id] as const,
 }
 
 export function useActiveExams(specialtyId?: number) {
@@ -24,6 +25,17 @@ export function useAdminExams(specialtyId?: number) {
   return useQuery({
     queryKey: examKeys.admin(specialtyId),
     queryFn: () => examsApi.all(specialtyId ? { specialtyId } : undefined),
+  })
+}
+
+export function useAdminExam(id: number) {
+  return useQuery({
+    queryKey: examKeys.adminDetail(id),
+    queryFn: async () => {
+      const exams = await examsApi.all()
+      return exams.find((exam) => exam.id === id) ?? null
+    },
+    enabled: Number.isFinite(id) && id > 0,
   })
 }
 

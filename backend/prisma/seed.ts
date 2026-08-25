@@ -5,8 +5,7 @@ import * as bcrypt from 'bcrypt';
 
 import { PrismaClient } from '../src/generated/prisma/client';
 import { UserRole } from '../src/generated/prisma/enums';
-import { DEMO_EXAMS } from './seed-data/demo-exams';
-import { DEMO_QUESTIONS } from './seed-data/demo-questions';
+import { DEMO_EXAMS, type DemoExam } from './seed-data/demo-exams';
 
 const SALT_ROUNDS = 10;
 
@@ -62,15 +61,16 @@ async function seedSpecialties(): Promise<void> {
 }
 
 /**
- * Savol allaqachon bor bo'lsa qayta yaratilmaydi — seed bir necha marta
- * ishga tushirilsa ham baza dublikat bilan to'lib ketmaydi.
+ * Imtihon va uning savollari birgalikda yaratiladi. Mavjud imtihonga tegilmaydi —
+ * seed bir necha marta ishga tushirilsa ham dublikat paydo bo'lmaydi.
  */
-async function seedQuestions(): Promise<number> {
-  let created = 0;
+async function seedExams(): Promise<{ exams: number; questions: number }> {
+  let exams = 0;
+  let questions = 0;
 
-  for (const [specialtyName, questions] of Object.entries(DEMO_QUESTIONS)) {
+  for (const demo of DEMO_EXAMS) {
     const specialty = await prisma.specialty.findUnique({
-      where: { name: specialtyName },
+      where: { name: demo.specialtyName },
       select: { id: true },
     });
 
@@ -78,98 +78,73 @@ async function seedQuestions(): Promise<number> {
       continue;
     }
 
-    for (const question of questions) {
-      const exists = await prisma.question.findFirst({
-        where: { specialtyId: specialty.id, text: question.text },
-        select: { id: true },
-      });
+    const existing = await prisma.exam.findFirst({
+      where: { specialtyId: specialty.id, title: demo.title },
+      select: { id: true, _count: { select: { questions: true } } },
+    });
 
-      if (exists) {
+    // Imtihon bor, lekin savollari yo'q bo'lsa — to'ldirib qo'yamiz.
+    if (existing) {
+      if (existing._count.questions > 0) {
         continue;
       }
 
-      await prisma.question.create({
+      await prisma.exam.update({
+        where: { id: existing.id },
         data: {
-          specialtyId: specialty.id,
-          text: question.text,
-          difficulty: question.difficulty,
-          options: {
-            create: question.options.map((option, position) => ({
-              text: option.text,
-              isCorrect: option.isCorrect,
-              position,
-            })),
-          },
+          isActive: true,
+          questionCount: Math.min(demo.questionCount, demo.questions.length),
+          questions: { create: toQuestionRows(demo) },
         },
       });
 
-      created += 1;
-    }
-  }
-
-  return created;
-}
-
-async function seedExams(): Promise<number> {
-  let created = 0;
-
-  for (const exam of DEMO_EXAMS) {
-    const specialty = await prisma.specialty.findUnique({
-      where: { name: exam.specialtyName },
-      select: { id: true },
-    });
-
-    if (!specialty) {
-      continue;
-    }
-
-    const available = await prisma.question.count({
-      where: {
-        specialtyId: specialty.id,
-        isActive: true,
-        ...(exam.difficulty ? { difficulty: exam.difficulty } : {}),
-      },
-    });
-
-    // Demo savol bazasi kichik — sozlama savollar soniga moslashtiriladi.
-    const questionCount = Math.min(exam.questionCount, available);
-
-    if (questionCount < 1) {
-      continue;
-    }
-
-    const exists = await prisma.exam.findFirst({
-      where: { specialtyId: specialty.id, title: exam.title },
-      select: { id: true },
-    });
-
-    if (exists) {
+      exams += 1;
+      questions += demo.questions.length;
       continue;
     }
 
     await prisma.exam.create({
       data: {
         specialtyId: specialty.id,
-        title: exam.title,
-        description: exam.description,
-        questionCount,
-        timeLimitMinutes: exam.timeLimitMinutes,
-        passingScore: exam.passingScore,
-        difficulty: exam.difficulty,
+        title: demo.title,
+        description: demo.description,
+        questionCount: Math.min(demo.questionCount, demo.questions.length),
+        timeLimitMinutes: demo.timeLimitMinutes,
+        passingScore: demo.passingScore,
+        isActive: true,
+        questions: { create: toQuestionRows(demo) },
       },
     });
 
-    created += 1;
+    exams += 1;
+    questions += demo.questions.length;
   }
 
-  return created;
+  return { exams, questions };
+}
+
+function toQuestionRows(demo: DemoExam) {
+  return demo.questions.map((question, position) => ({
+    text: question.text,
+    difficulty: question.difficulty,
+    position,
+    options: {
+      create: question.options.map((option, optionPosition) => ({
+        text: option.text,
+        isCorrect: option.isCorrect,
+        position: optionPosition,
+      })),
+    },
+  }));
 }
 
 async function seedAccounts(): Promise<void> {
   for (const account of ACCOUNTS) {
     const password = await bcrypt.hash(account.password, SALT_ROUNDS);
     const specialty = account.specialtyName
-      ? await prisma.specialty.findUnique({ where: { name: account.specialtyName } })
+      ? await prisma.specialty.findUnique({
+          where: { name: account.specialtyName },
+        })
       : null;
 
     const profile = account.profile
@@ -196,15 +171,16 @@ async function main(): Promise<void> {
   }
 
   await seedSpecialties();
-  const newQuestions = await seedQuestions();
-  const newExams = await seedExams();
+  const created = await seedExams();
   await seedAccounts();
 
   console.log('✅ Seed tugadi');
-  console.log(`   Yangi demo savollar: ${newQuestions}`);
-  console.log(`   Yangi demo imtihonlar: ${newExams}`);
+  console.log(`   Yangi imtihonlar: ${created.exams}`);
+  console.log(`   Yangi demo savollar: ${created.questions}`);
   for (const account of ACCOUNTS) {
-    console.log(`   ${account.role.padEnd(6)} ${account.email} / ${account.password}`);
+    console.log(
+      `   ${account.role.padEnd(6)} ${account.email} / ${account.password}`,
+    );
   }
 }
 

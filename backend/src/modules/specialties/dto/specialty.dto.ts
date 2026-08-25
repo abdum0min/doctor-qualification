@@ -21,7 +21,13 @@ export class AdminSpecialtyDto extends SpecialtyDto {
   })
   doctorsCount: number;
 
-  @ApiProperty({ example: 40, description: 'Savol bazasidagi savollar soni' })
+  @ApiProperty({ example: 2, description: 'Yo`nalishdagi imtihonlar soni' })
+  examsCount: number;
+
+  @ApiProperty({
+    example: 40,
+    description: 'Imtihonlarga biriktirilgan savollar soni',
+  })
   questionsCount: number;
 
   @ApiProperty({ example: '2026-01-01T10:00:00.000Z' })

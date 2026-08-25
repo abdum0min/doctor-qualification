@@ -1,6 +1,7 @@
 export {
   examKeys,
   useActiveExams,
+  useAdminExam,
   useAdminExams,
   useCreateExam,
   useExam,

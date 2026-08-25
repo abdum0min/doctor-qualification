@@ -3,7 +3,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Trash2 } from 'lucide-react'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
 
-import { SpecialtySelect } from '@/features/specialties'
 import { Button } from '@/shared/ui/button'
 import {
   Dialog,
@@ -33,7 +32,6 @@ import type { Question } from '../model/types'
 import { DifficultySelect } from './difficulty-select'
 
 const EMPTY_VALUES: QuestionValues = {
-  specialtyId: 0,
   text: '',
   difficulty: 'BEGINNER',
   isActive: true,
@@ -43,7 +41,6 @@ const EMPTY_VALUES: QuestionValues = {
 
 function toFormValues(question: Question): QuestionValues {
   return {
-    specialtyId: question.specialty.id,
     text: question.text,
     difficulty: question.difficulty,
     isActive: question.isActive,
@@ -56,14 +53,15 @@ function toFormValues(question: Question): QuestionValues {
 }
 
 interface QuestionDialogProps {
+  examId: number
   question?: Question
   children: ReactNode
 }
 
-export function QuestionDialog({ question, children }: QuestionDialogProps) {
+export function QuestionDialog({ examId, question, children }: QuestionDialogProps) {
   const [open, setOpen] = useState(false)
-  const create = useCreateQuestion()
-  const update = useUpdateQuestion()
+  const create = useCreateQuestion(examId)
+  const update = useUpdateQuestion(examId)
   const isPending = create.isPending || update.isPending
 
   const {
@@ -125,47 +123,6 @@ export function QuestionDialog({ question, children }: QuestionDialogProps) {
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="space-y-5">
-          <div className="grid gap-5 sm:grid-cols-2">
-            <FormField
-              id="specialtyId"
-              label="Mutaxassislik"
-              error={errors.specialtyId?.message}
-              required
-            >
-              <Controller
-                control={control}
-                name="specialtyId"
-                render={({ field }) => (
-                  <SpecialtySelect
-                    id="specialtyId"
-                    value={field.value || null}
-                    onChange={(value) => field.onChange(value ?? 0)}
-                    aria-invalid={Boolean(errors.specialtyId)}
-                  />
-                )}
-              />
-            </FormField>
-
-            <FormField
-              id="difficulty"
-              label="Daraja"
-              error={errors.difficulty?.message}
-              required
-            >
-              <Controller
-                control={control}
-                name="difficulty"
-                render={({ field }) => (
-                  <DifficultySelect
-                    id="difficulty"
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-            </FormField>
-          </div>
-
           <FormField id="text" label="Savol matni" error={errors.text?.message} required>
             <Textarea
               id="text"
@@ -173,6 +130,25 @@ export function QuestionDialog({ question, children }: QuestionDialogProps) {
               placeholder="Miokard infarktining asosiy belgisi qaysi?"
               aria-invalid={Boolean(errors.text)}
               {...register('text')}
+            />
+          </FormField>
+
+          <FormField
+            id="difficulty"
+            label="Daraja"
+            error={errors.difficulty?.message}
+            required
+          >
+            <Controller
+              control={control}
+              name="difficulty"
+              render={({ field }) => (
+                <DifficultySelect
+                  id="difficulty"
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
             />
           </FormField>
 
@@ -248,7 +224,7 @@ export function QuestionDialog({ question, children }: QuestionDialogProps) {
             <div className="space-y-0.5">
               <Label htmlFor="isActive">Faol</Label>
               <p className="text-xs text-muted-foreground">
-                Nofaol savol imtihonlarga tanlanmaydi.
+                Nofaol savol imtihonga tanlanmaydi.
               </p>
             </div>
             <Controller

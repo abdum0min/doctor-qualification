@@ -2,14 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 
 import { Difficulty } from 'src/generated/prisma/enums';
 
-class QuestionSpecialtyDto {
-  @ApiProperty({ example: 3 })
-  id: number;
-
-  @ApiProperty({ example: 'Kardiolog' })
-  name: string;
-}
-
 class QuestionOptionDto {
   @ApiProperty({ example: 41 })
   id: number;
@@ -28,6 +20,9 @@ export class QuestionDto {
   @ApiProperty({ example: 17 })
   id: number;
 
+  @ApiProperty({ example: 5 })
+  examId: number;
+
   @ApiProperty({ example: 'Miokard infarktining asosiy belgisi qaysi?' })
   text: string;
 
@@ -37,8 +32,8 @@ export class QuestionDto {
   @ApiProperty({ example: true })
   isActive: boolean;
 
-  @ApiProperty({ type: QuestionSpecialtyDto })
-  specialty: QuestionSpecialtyDto;
+  @ApiProperty({ example: 0, description: 'Imtihon ichidagi tartib raqami' })
+  position: number;
 
   @ApiProperty({ type: [QuestionOptionDto] })
   options: QuestionOptionDto[];

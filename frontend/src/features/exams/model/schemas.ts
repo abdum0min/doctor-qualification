@@ -1,6 +1,5 @@
 import { z } from 'zod'
 
-import { DIFFICULTIES, type Difficulty } from '@/features/questions'
 import { EXAM_LIMITS } from './types'
 
 /** Raqamli maydonlar formada matn bo'lib turadi — `<input>` doim string qaytaradi. */
@@ -29,7 +28,6 @@ export const examSchema = z.object({
   questionCount: numericField(EXAM_LIMITS.questionCount, 'ta savol'),
   timeLimitMinutes: numericField(EXAM_LIMITS.timeLimitMinutes, 'daqiqa'),
   passingScore: numericField(EXAM_LIMITS.passingScore, 'foiz'),
-  difficulty: z.enum(DIFFICULTIES).nullable(),
   isActive: z.boolean(),
 })
 
@@ -42,7 +40,6 @@ export interface ExamPayload {
   questionCount: number
   timeLimitMinutes: number
   passingScore: number
-  difficulty: Difficulty | null
   isActive: boolean
 }
 
@@ -54,7 +51,6 @@ export function toExamPayload(values: ExamValues): ExamPayload {
     questionCount: Number(values.questionCount),
     timeLimitMinutes: Number(values.timeLimitMinutes),
     passingScore: Number(values.passingScore),
-    difficulty: values.difficulty,
     isActive: values.isActive,
   }
 }

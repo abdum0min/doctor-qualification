@@ -2,7 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,
-  IsEnum,
   IsInt,
   IsOptional,
   IsPositive,
@@ -12,8 +11,6 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-
-import { Difficulty } from 'src/generated/prisma/enums';
 
 import { EXAM_LIMITS } from '../exam.config';
 
@@ -72,15 +69,6 @@ export class CreateExamDto {
   @Min(EXAM_LIMITS.passingScore.min)
   @Max(EXAM_LIMITS.passingScore.max)
   passingScore: number;
-
-  @ApiPropertyOptional({
-    enum: Difficulty,
-    nullable: true,
-    description: 'Bo`sh qoldirilsa barcha darajalardan aralash tanlanadi',
-  })
-  @IsOptional()
-  @IsEnum(Difficulty)
-  difficulty?: Difficulty | null;
 
   @ApiPropertyOptional({ example: true, default: true })
   @IsOptional()

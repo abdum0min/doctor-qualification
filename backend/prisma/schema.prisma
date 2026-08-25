@@ -60,7 +60,6 @@ model Specialty {
   isActive    Boolean @default(true)
 
   doctorProfiles DoctorProfile[]
-  questions      Question[]
   exams          Exam[]
 
   createdAt DateTime @default(now())
@@ -79,12 +78,13 @@ enum Difficulty {
 /// Savol bazasi. Javob variantlari `QuestionOption` ichida saqlanadi va
 /// `isCorrect` mijozga hech qachon yuborilmaydi (PrismaService `omit`).
 model Question {
-  id          Int        @id @default(autoincrement())
-  specialtyId Int
-  specialty   Specialty  @relation(fields: [specialtyId], references: [id], onDelete: Restrict)
-  text        String     @db.VarChar(1000)
-  difficulty  Difficulty
-  isActive    Boolean    @default(true)
+  id         Int        @id @default(autoincrement())
+  examId     Int
+  exam       Exam       @relation(fields: [examId], references: [id], onDelete: Cascade)
+  text       String     @db.VarChar(1000)
+  difficulty Difficulty
+  position   Int
+  isActive   Boolean    @default(true)
 
   options  QuestionOption[]
   attempts AttemptQuestion[]
@@ -92,8 +92,8 @@ model Question {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([specialtyId, difficulty, isActive])
-  @@index([createdAt])
+  @@unique([examId, position])
+  @@index([examId, isActive])
 }
 
 model QuestionOption {
@@ -107,8 +107,8 @@ model QuestionOption {
   @@unique([questionId, position])
 }
 
-/// Imtihon konfiguratsiyasi. Savollar har bir urinishda shu sozlama asosida
-/// bazadan tanlanadi — imtihonga qat'iy savollar biriktirilmaydi.
+/// Imtihon — o'z savollar to'plamiga ega. Har bir urinishda shu to'plamdan
+/// `questionCount` ta savol tasodifiy tanlanadi.
 model Exam {
   id          Int     @id @default(autoincrement())
   specialtyId Int
@@ -120,12 +120,11 @@ model Exam {
   questionCount    Int
   timeLimitMinutes Int
   passingScore     Int
-  /// `null` — barcha darajalardagi savollar aralash tanlanadi.
-  difficulty       Difficulty?
 
   isActive Boolean @default(true)
 
-  attempts ExamAttempt[]
+  questions Question[]
+  attempts  ExamAttempt[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
