@@ -11,6 +11,7 @@ export const ROUTES = {
   // Administrator (ADMIN)
   admin: '/admin',
   adminSpecialties: '/admin/specialties',
+  adminQuestions: '/admin/questions',
   designSystem: '/design-system',
 } as const
 

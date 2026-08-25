@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Palette,
+  FileQuestion,
   Stethoscope,
   User,
   type LucideIcon,
@@ -23,6 +24,7 @@ const DOCTOR_NAV_ITEMS: NavItem[] = [
 const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.admin, label: 'Boshqaruv paneli', icon: LayoutDashboard },
   { to: ROUTES.adminSpecialties, label: 'Mutaxassisliklar', icon: Stethoscope },
+  { to: ROUTES.adminQuestions, label: 'Savollar', icon: FileQuestion },
   { to: ROUTES.designSystem, label: 'Design System', icon: Palette },
 ]
 

@@ -1,7 +1,11 @@
 import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 
-import { AdminDashboardPage, AdminSpecialtiesPage } from '@/pages/admin'
+import {
+  AdminDashboardPage,
+  AdminQuestionsPage,
+  AdminSpecialtiesPage,
+} from '@/pages/admin'
 import { DashboardPage } from '@/pages/dashboard-page'
 import { LoginPage } from '@/pages/login-page'
 import { NotFoundPage } from '@/pages/not-found-page'
@@ -55,6 +59,7 @@ export function AppRouter() {
           <Route element={<AdminRoute />}>
             <Route path={ROUTES.admin} element={<AdminDashboardPage />} />
             <Route path={ROUTES.adminSpecialties} element={<AdminSpecialtiesPage />} />
+            <Route path={ROUTES.adminQuestions} element={<AdminQuestionsPage />} />
             <Route
               path={ROUTES.designSystem}
               element={

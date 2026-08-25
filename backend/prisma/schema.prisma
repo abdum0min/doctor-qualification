@@ -57,9 +57,47 @@ model Specialty {
   isActive    Boolean @default(true)
 
   doctorProfiles DoctorProfile[]
+  questions      Question[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([isActive, name])
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+/// Savol bazasi. Javob variantlari `QuestionOption` ichida saqlanadi va
+/// `isCorrect` mijozga hech qachon yuborilmaydi (PrismaService `omit`).
+model Question {
+  id          Int        @id @default(autoincrement())
+  specialtyId Int
+  specialty   Specialty  @relation(fields: [specialtyId], references: [id], onDelete: Restrict)
+  text        String     @db.VarChar(1000)
+  difficulty  Difficulty
+  isActive    Boolean    @default(true)
+
+  options QuestionOption[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([specialtyId, difficulty, isActive])
+  @@index([createdAt])
+}
+
+model QuestionOption {
+  id         Int      @id @default(autoincrement())
+  questionId Int
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String   @db.VarChar(500)
+  isCorrect  Boolean  @default(false)
+  position   Int
+
+  @@unique([questionId, position])
 }

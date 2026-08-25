@@ -21,6 +21,9 @@ export class AdminSpecialtyDto extends SpecialtyDto {
   })
   doctorsCount: number;
 
+  @ApiProperty({ example: 40, description: 'Savol bazasidagi savollar soni' })
+  questionsCount: number;
+
   @ApiProperty({ example: '2026-01-01T10:00:00.000Z' })
   createdAt: Date;
 

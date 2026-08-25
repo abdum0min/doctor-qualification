@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 
 import { PrismaClient } from '../src/generated/prisma/client';
 import { UserRole } from '../src/generated/prisma/enums';
+import { DEMO_QUESTIONS } from './seed-data/demo-questions';
 
 const SALT_ROUNDS = 10;
 
@@ -59,6 +60,55 @@ async function seedSpecialties(): Promise<void> {
   }
 }
 
+/**
+ * Savol allaqachon bor bo'lsa qayta yaratilmaydi — seed bir necha marta
+ * ishga tushirilsa ham baza dublikat bilan to'lib ketmaydi.
+ */
+async function seedQuestions(): Promise<number> {
+  let created = 0;
+
+  for (const [specialtyName, questions] of Object.entries(DEMO_QUESTIONS)) {
+    const specialty = await prisma.specialty.findUnique({
+      where: { name: specialtyName },
+      select: { id: true },
+    });
+
+    if (!specialty) {
+      continue;
+    }
+
+    for (const question of questions) {
+      const exists = await prisma.question.findFirst({
+        where: { specialtyId: specialty.id, text: question.text },
+        select: { id: true },
+      });
+
+      if (exists) {
+        continue;
+      }
+
+      await prisma.question.create({
+        data: {
+          specialtyId: specialty.id,
+          text: question.text,
+          difficulty: question.difficulty,
+          options: {
+            create: question.options.map((option, position) => ({
+              text: option.text,
+              isCorrect: option.isCorrect,
+              position,
+            })),
+          },
+        },
+      });
+
+      created += 1;
+    }
+  }
+
+  return created;
+}
+
 async function seedAccounts(): Promise<void> {
   for (const account of ACCOUNTS) {
     const password = await bcrypt.hash(account.password, SALT_ROUNDS);
@@ -90,9 +140,11 @@ async function main(): Promise<void> {
   }
 
   await seedSpecialties();
+  const newQuestions = await seedQuestions();
   await seedAccounts();
 
   console.log('✅ Seed tugadi');
+  console.log(`   Yangi demo savollar: ${newQuestions}`);
   for (const account of ACCOUNTS) {
     console.log(`   ${account.role.padEnd(6)} ${account.email} / ${account.password}`);
   }

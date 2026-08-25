@@ -26,8 +26,11 @@ export class PrismaService
         keepAlive: true,
       }),
       log: ['warn', 'error'],
+      // Maxfiy ustunlar global darajada kesiladi — biror `include` esdan
+      // chiqsa ham tashqariga chiqmaydi. Admin so`rovlarida `omit` qayta ochiladi.
       omit: {
         user: { password: true },
+        questionOption: { isCorrect: true },
       },
     });
   }

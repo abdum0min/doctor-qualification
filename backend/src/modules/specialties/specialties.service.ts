@@ -16,6 +16,7 @@ export interface SpecialtyView {
 
 export interface AdminSpecialtyView extends SpecialtyView {
   doctorsCount: number;
+  questionsCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,7 +47,7 @@ export class SpecialtiesService {
         ...publicSelect,
         createdAt: true,
         updatedAt: true,
-        _count: { select: { doctorProfiles: true } },
+        _count: { select: { doctorProfiles: true, questions: true } },
       },
       orderBy: { name: 'asc' },
     });
@@ -54,6 +55,7 @@ export class SpecialtiesService {
     return specialties.map(({ _count, ...specialty }) => ({
       ...specialty,
       doctorsCount: _count.doctorProfiles,
+      questionsCount: _count.questions,
     }));
   }
 
