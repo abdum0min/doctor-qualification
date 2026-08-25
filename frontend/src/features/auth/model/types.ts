@@ -1,4 +1,6 @@
-export type UserRole = 'ADMIN' | 'DOCTOR'
+import type { UserRole } from '@/shared/config'
+
+export type { UserRole }
 
 export interface User {
   id: number

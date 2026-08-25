@@ -1,3 +1,5 @@
+import type { UserRole } from './roles'
+
 export const ROUTES = {
   // Ochiq
   home: '/',
@@ -24,6 +26,11 @@ export const ROUTES = {
 } as const
 
 export type AppRoute = (typeof ROUTES)[keyof typeof ROUTES]
+
+/** Har bir rol o`zining boshlang`ich sahifasiga tushadi. */
+export function roleHome(role: UserRole | undefined): string {
+  return role === 'ADMIN' ? ROUTES.admin : ROUTES.dashboard
+}
 
 /** Parametrli yo`llar uchun quruvchilar — xom qator birlashtirish o`rniga. */
 export const buildRoute = {

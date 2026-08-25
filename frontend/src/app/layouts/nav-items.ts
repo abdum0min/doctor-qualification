@@ -12,8 +12,8 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 
-import type { UserRole } from '@/features/auth'
-import { ROUTES } from '@/shared/config'
+import type { UserRole } from '@/shared/config'
+import { ROLE_LABELS, ROUTES } from '@/shared/config'
 
 export interface NavItem {
   to: string
@@ -43,7 +43,4 @@ export function navItemsForRole(role: UserRole | undefined): NavItem[] {
   return role === 'ADMIN' ? ADMIN_NAV_ITEMS : DOCTOR_NAV_ITEMS
 }
 
-export const ROLE_LABELS: Record<UserRole, string> = {
-  ADMIN: 'Administrator',
-  DOCTOR: 'Shifokor',
-}
+export { ROLE_LABELS }

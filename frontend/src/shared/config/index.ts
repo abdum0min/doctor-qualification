@@ -1,3 +1,4 @@
 export { APP } from './app'
 export { env } from './env'
-export { buildRoute, ROUTES, type AppRoute } from './routes'
+export { ROLE_LABELS, type UserRole } from './roles'
+export { buildRoute, roleHome, ROUTES, type AppRoute } from './routes'

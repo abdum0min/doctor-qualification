@@ -1,11 +1,19 @@
 import { Link, Outlet } from 'react-router-dom'
 
 import { useCurrentUser } from '@/features/auth'
-import { APP, ROUTES } from '@/shared/config'
+import { APP, roleHome, ROUTES } from '@/shared/config'
 import { BrandLogo } from '@/shared/ui/brand-logo'
 import { Button } from '@/shared/ui/button'
 import { ThemeToggle } from '@/shared/ui/theme-toggle'
-import { roleHome } from '../router/role-home'
+
+/** Bosh sahifadagi bo'limlarga ichki havolalar. */
+const NAV_LINKS = [
+  { href: '/', label: 'Bosh sahifa' },
+  { href: '#specialties', label: 'Mutaxassisliklar' },
+  { href: '#how-it-works', label: 'Qanday ishlaydi' },
+  { href: '#statistics', label: 'Statistika' },
+  { href: '#contact', label: 'Aloqa' },
+]
 
 export function PublicLayout() {
   const user = useCurrentUser()
@@ -18,6 +26,18 @@ export function PublicLayout() {
             <BrandLogo />
           </Link>
 
+          <nav className="hidden items-center gap-1 lg:flex">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="rounded-md px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
 
@@ -27,7 +47,8 @@ export function PublicLayout() {
               </Button>
             ) : (
               <>
-                <Button asChild variant="ghost" size="sm">
+                {/* Kichik ekranda ikkala tugma sig'maydi — asosiysi qoladi. */}
+                <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                   <Link to={ROUTES.login}>Kirish</Link>
                 </Button>
                 <Button asChild size="sm">

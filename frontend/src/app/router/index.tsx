@@ -13,6 +13,7 @@ import {
 import { AttemptPage } from '@/pages/attempt-page'
 import { CertificatesPage } from '@/pages/certificates-page'
 import { DashboardPage } from '@/pages/dashboard-page'
+import { LandingPage } from '@/pages/landing'
 import { ExamsPage } from '@/pages/exams-page'
 import { LoginPage } from '@/pages/login-page'
 import { NotFoundPage } from '@/pages/not-found-page'
@@ -24,13 +25,7 @@ import { Spinner } from '@/shared/ui/spinner'
 import { AuthLayout } from '../layouts/auth-layout'
 import { PublicLayout } from '../layouts/public-layout'
 import { DashboardLayout } from '../layouts/dashboard-layout'
-import {
-  AdminRoute,
-  DoctorRoute,
-  GuestRoute,
-  ProtectedRoute,
-  RoleHomeRedirect,
-} from './guards'
+import { AdminRoute, DoctorRoute, GuestRoute, ProtectedRoute } from './guards'
 
 // Design system barcha komponentlarni import qiladi — alohida chunk'ga ajratamiz,
 // shunda asosiy bundle'ga tushmaydi. Og'ir sahifalarni shu qolipda yuklang.
@@ -50,6 +45,7 @@ export function AppRouter() {
   return (
     <Routes>
       <Route element={<PublicLayout />}>
+        <Route path={ROUTES.home} element={<LandingPage />} />
         <Route path={ROUTES.verify} element={<VerifyPage />} />
       </Route>
 
@@ -61,8 +57,6 @@ export function AppRouter() {
       </Route>
 
       <Route element={<ProtectedRoute />}>
-        <Route path={ROUTES.home} element={<RoleHomeRedirect />} />
-
         <Route element={<DashboardLayout />}>
           <Route element={<DoctorRoute />}>
             <Route path={ROUTES.dashboard} element={<DashboardPage />} />

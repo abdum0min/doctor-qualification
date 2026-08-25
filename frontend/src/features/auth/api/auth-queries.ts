@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import type { ApiError } from '@/shared/api'
-import { ROUTES } from '@/shared/config'
+import { roleHome, ROUTES } from '@/shared/config'
 import { queryClient } from '@/shared/lib/query-client'
 import { tokenStorage } from '@/shared/lib/token-storage'
 import { useAuthStore } from '../model/auth-store'
@@ -45,7 +45,7 @@ export function useLogin() {
     onSuccess: (result) => {
       signIn(result.accessToken, result.user)
       toast.success(`Xush kelibsiz, ${result.user.fullname}`)
-      navigate(ROUTES.home, { replace: true })
+      navigate(roleHome(result.user.role), { replace: true })
     },
     onError: (error: ApiError) => toast.error(error.message),
   })
@@ -61,7 +61,7 @@ export function useRegister() {
       // Backend ro'yxatdan o'tgan zahoti token qaytaradi — qayta login shart emas.
       signIn(result.accessToken, result.user)
       toast.success('Hisobingiz yaratildi')
-      navigate(ROUTES.home, { replace: true })
+      navigate(roleHome(result.user.role), { replace: true })
     },
     onError: (error: ApiError) => toast.error(error.message),
   })
