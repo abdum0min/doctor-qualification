@@ -3,59 +3,40 @@ import { useCallback, useMemo, useState } from 'react'
 import { useDebounce } from './useDebounce'
 
 interface TableQueryState {
+  page: number
   limit: number
   search: string
-  debouncedSearch: string
+  setPage: (page: number) => void
   setSearch: (value: string) => void
-  goNext: (cursor: string) => void
-  goBack: () => void
-  reset: () => void
-  canGoBack: boolean
-  params: { limit: number; cursor?: string; search?: string }
+  /** Filtr o'zgarganda birinchi sahifaga qaytarish uchun. */
+  resetPage: () => void
+  params: { page: number; limit: number; search?: string }
 }
 
+/**
+ * Ro'yxat sahifalari uchun server tomonlama sahifalash holati.
+ * Qidiruv debounce qilinadi; qidiruv o'zgarganda sahifa 1 ga qaytadi.
+ */
 export function useTableQuery(limit = 10): TableQueryState {
-  const [cursorStack, setCursorStack] = useState<string[]>([])
+  const [page, setPage] = useState(1)
   const [search, setSearchValue] = useState('')
   const debouncedSearch = useDebounce(search, 400)
 
   const setSearch = useCallback((value: string) => {
     setSearchValue(value)
-    setCursorStack([])
+    setPage(1)
   }, [])
 
-  const goNext = useCallback((cursor: string) => {
-    setCursorStack((stack) => [...stack, cursor])
-  }, [])
-
-  const goBack = useCallback(() => {
-    setCursorStack((stack) => stack.slice(0, -1))
-  }, [])
-
-  const reset = useCallback(() => {
-    setCursorStack([])
-  }, [])
-
-  const cursor = cursorStack.length > 0 ? cursorStack[cursorStack.length - 1] : undefined
+  const resetPage = useCallback(() => setPage(1), [])
 
   const params = useMemo(
     () => ({
+      page,
       limit,
-      ...(cursor && { cursor }),
-      ...(debouncedSearch && { search: debouncedSearch }),
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
     }),
-    [limit, cursor, debouncedSearch],
+    [page, limit, debouncedSearch],
   )
 
-  return {
-    limit,
-    search,
-    debouncedSearch,
-    setSearch,
-    goNext,
-    goBack,
-    reset,
-    canGoBack: cursorStack.length > 0,
-    params,
-  }
+  return { page, limit, search, setPage, setSearch, resetPage, params }
 }

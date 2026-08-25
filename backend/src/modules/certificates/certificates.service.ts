@@ -4,9 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { CursorPaginated } from 'src/common/interfaces/api-response.interface';
-import { decodeCursor } from 'src/common/utils/cursor.util';
-import { buildCursorPaginated } from 'src/common/utils/pagination.util';
+import { Paginated } from 'src/common/interfaces/api-response.interface';
+import { buildPaginated, toSkipTake } from 'src/common/utils/pagination.util';
 import {
   buildCertificateId,
   certificateExpiryDate,
@@ -135,19 +134,22 @@ export class CertificatesService {
   async findOwn(
     userId: number,
     query: CertificateQueryDto,
-  ): Promise<CursorPaginated<CertificateView>> {
+  ): Promise<Paginated<CertificateView>> {
     const doctorProfile = await this.requireDoctorProfile(userId);
-    const cursor = decodeCursor(query.cursor);
 
-    const rows = await this.prisma.certificate.findMany({
-      where: { doctorProfileId: doctorProfile.id },
-      select: certificateSelect,
-      take: query.limit + 1,
-      ...(cursor ? { cursor: { id: cursor.id }, skip: 1 } : {}),
-      orderBy: [{ issuedAt: 'desc' }, { id: 'desc' }],
-    });
+    const where = { doctorProfileId: doctorProfile.id };
 
-    return buildCursorPaginated(rows, query.limit, 'issuedAt');
+    const [rows, total] = await Promise.all([
+      this.prisma.certificate.findMany({
+        where,
+        select: certificateSelect,
+        ...toSkipTake(query),
+        orderBy: [{ issuedAt: 'desc' }, { id: 'desc' }],
+      }),
+      this.prisma.certificate.count({ where }),
+    ]);
+
+    return buildPaginated(rows, total, query);
   }
 
   async findOwnByCertificateId(
@@ -170,38 +172,40 @@ export class CertificatesService {
 
   async findAll(
     query: AdminCertificateQueryDto,
-  ): Promise<CursorPaginated<CertificateView>> {
-    const cursor = decodeCursor(query.cursor);
-
-    const rows = await this.prisma.certificate.findMany({
-      where: {
-        ...(query.status ? { status: query.status } : {}),
-        ...(query.search
-          ? {
-              OR: [
-                {
-                  certificateId: {
-                    contains: query.search,
-                    mode: 'insensitive',
-                  },
+  ): Promise<Paginated<CertificateView>> {
+    const where: Prisma.CertificateWhereInput = {
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.search
+        ? {
+            OR: [
+              {
+                certificateId: {
+                  contains: query.search,
+                  mode: 'insensitive',
                 },
-                {
-                  doctorFullname: {
-                    contains: query.search,
-                    mode: 'insensitive',
-                  },
+              },
+              {
+                doctorFullname: {
+                  contains: query.search,
+                  mode: 'insensitive',
                 },
-              ],
-            }
-          : {}),
-      },
-      select: certificateSelect,
-      take: query.limit + 1,
-      ...(cursor ? { cursor: { id: cursor.id }, skip: 1 } : {}),
-      orderBy: [{ issuedAt: 'desc' }, { id: 'desc' }],
-    });
+              },
+            ],
+          }
+        : {}),
+    };
 
-    return buildCursorPaginated(rows, query.limit, 'issuedAt');
+    const [rows, total] = await Promise.all([
+      this.prisma.certificate.findMany({
+        where,
+        select: certificateSelect,
+        ...toSkipTake(query),
+        orderBy: [{ issuedAt: 'desc' }, { id: 'desc' }],
+      }),
+      this.prisma.certificate.count({ where }),
+    ]);
+
+    return buildPaginated(rows, total, query);
   }
 
   /**

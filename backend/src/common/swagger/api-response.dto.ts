@@ -6,19 +6,18 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
  * Bu yerda ular faqat `/api/docs` sahifasi to'g'ri ko'rinishi uchun turadi.
  */
 
-export class CursorPaginationMetaDto {
-  @ApiProperty({ example: 10, description: 'So`ralgan sahifa hajmi' })
+export class PaginationMetaDto {
+  @ApiProperty({ example: 1 })
+  page: number;
+
+  @ApiProperty({ example: 10 })
   limit: number;
 
-  @ApiProperty({
-    example: 'eyJpZCI6MTIsInNvcnQiOiIyMDI2LTAxLTAxIn0',
-    nullable: true,
-    description: 'Keyingi sahifani olish uchun `?cursor=` qiymati',
-  })
-  nextCursor: string | null;
+  @ApiProperty({ example: 128, description: 'Filtrga mos jami yozuvlar soni' })
+  total: number;
 
-  @ApiProperty({ example: true })
-  hasMore: boolean;
+  @ApiProperty({ example: 13 })
+  totalPages: number;
 }
 
 /** Barcha muvaffaqiyatli javoblarning umumiy qismi. */
@@ -38,8 +37,8 @@ export class ApiSuccessEnvelope {
   })
   data: unknown;
 
-  @ApiPropertyOptional({ type: CursorPaginationMetaDto })
-  meta?: CursorPaginationMetaDto;
+  @ApiPropertyOptional({ type: PaginationMetaDto })
+  meta?: PaginationMetaDto;
 
   @ApiProperty({ example: '2026-01-01T10:00:00.000Z' })
   timestamp: string;

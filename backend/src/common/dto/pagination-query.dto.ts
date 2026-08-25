@@ -4,46 +4,34 @@ import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export type SortOrder = 'asc' | 'desc';
 
-export class CursorQueryDto {
-  @ApiPropertyOptional({
-    default: 10,
-    minimum: 1,
-    maximum: 100,
-    description: 'Items per page',
-  })
+export const MAX_PAGE_SIZE = 100;
+
+export class PageQueryDto {
+  @ApiPropertyOptional({ default: 1, minimum: 1 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(100)
+  page: number = 1;
+
+  @ApiPropertyOptional({ default: 10, minimum: 1, maximum: MAX_PAGE_SIZE })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(MAX_PAGE_SIZE)
   limit: number = 10;
 
-  @ApiPropertyOptional({ description: 'Free text search' })
+  @ApiPropertyOptional({ description: 'Matn bo`yicha qidiruv' })
   @IsOptional()
   @IsString()
   @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? value.trim() : undefined,
+    typeof value === 'string' && value.trim() ? value.trim() : undefined,
   )
   search?: string;
-
-  @ApiPropertyOptional({
-    default: 'createdAt',
-    description: 'Field to sort by',
-  })
-  @IsOptional()
-  @IsString()
-  sortBy: string = 'createdAt';
 
   @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'desc' })
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortOrder: SortOrder = 'desc';
-
-  @ApiPropertyOptional({
-    description:
-      'Opaque cursor returned in the previous response (meta.nextCursor)',
-  })
-  @IsOptional()
-  @IsString()
-  cursor?: string;
 }

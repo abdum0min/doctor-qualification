@@ -98,7 +98,8 @@ export function PatternsSection() {
         >
           <p className="text-sm text-muted-foreground">
             Jadval yoki kartalar shu yerga joylashadi. Qidiruv `useTableQuery` orqali
-            debounce qilinadi: joriy qiymat — <b>{table.debouncedSearch || '—'}</b>
+            debounce qilinadi va so'rov parametriga tushadi:{' '}
+            <b>{table.params.search || '—'}</b>
           </p>
         </PageShell>
       </Demo>

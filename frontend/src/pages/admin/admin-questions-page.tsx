@@ -111,7 +111,7 @@ export function AdminQuestionsPage() {
               value={specialtyId}
               onChange={(value) => {
                 setSpecialtyId(value)
-                table.reset()
+                table.resetPage()
               }}
               placeholder="Barcha mutaxassisliklar"
             />
@@ -122,7 +122,7 @@ export function AdminQuestionsPage() {
               value={difficulty}
               onChange={(value) => {
                 setDifficulty(value)
-                table.reset()
+                table.resetPage()
               }}
               placeholder="Barcha darajalar"
             />
@@ -153,12 +153,7 @@ export function AdminQuestionsPage() {
       </AsyncState>
 
       {data && (
-        <TablePagination
-          meta={data.meta}
-          onNext={table.goNext}
-          onPrev={table.goBack}
-          canGoBack={table.canGoBack}
-        />
+        <TablePagination meta={data.meta} onPageChange={table.setPage} />
       )}
     </PageShell>
   )

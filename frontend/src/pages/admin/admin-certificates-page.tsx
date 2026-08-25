@@ -128,7 +128,7 @@ export function AdminCertificatesPage() {
             value={status ?? ALL}
             onValueChange={(value) => {
               setStatus(value === ALL ? null : (value as CertificateStatus))
-              table.reset()
+              table.resetPage()
             }}
           >
             <SelectTrigger className="w-full">
@@ -158,12 +158,7 @@ export function AdminCertificatesPage() {
       </AsyncState>
 
       {data && (
-        <TablePagination
-          meta={data.meta}
-          onNext={table.goNext}
-          onPrev={table.goBack}
-          canGoBack={table.canGoBack}
-        />
+        <TablePagination meta={data.meta} onPageChange={table.setPage} />
       )}
     </PageShell>
   )

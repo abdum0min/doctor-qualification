@@ -44,8 +44,8 @@ export function ApiDataResponse<TModel extends Type<unknown>>(
 }
 
 /**
- * Kursorli paginatsiya bilan qaytadigan ro'yxat javoblari uchun.
- * `data` — elementlar massivi, `meta` — `{ limit, nextCursor, hasMore }`.
+ * Sahifalangan ro'yxat javoblari uchun.
+ * `data` — elementlar massivi, `meta` — `{ page, limit, total, totalPages }`.
  */
 export function ApiPaginatedResponse<TModel extends Type<unknown>>(
   model: TModel,
@@ -60,7 +60,7 @@ export function ApiPaginatedResponse<TModel extends Type<unknown>>(
         allOf: [{ $ref: '#/components/schemas/ApiSuccessEnvelope' }],
         properties: {
           data: { type: 'array', items: { $ref: getSchemaPath(model) } },
-          meta: { $ref: '#/components/schemas/CursorPaginationMetaDto' },
+          meta: { $ref: '#/components/schemas/PaginationMetaDto' },
         },
       },
     }),

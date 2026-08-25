@@ -1,12 +1,13 @@
 import { ApiPropertyOptional, PickType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsPositive } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsPositive } from 'class-validator';
 
-import { CursorQueryDto } from 'src/common/dto/pagination-query.dto';
+import { PageQueryDto } from 'src/common/dto/pagination-query.dto';
+import { AttemptStatus } from 'src/generated/prisma/enums';
 
-export class AttemptHistoryQueryDto extends PickType(CursorQueryDto, [
+export class AttemptHistoryQueryDto extends PickType(PageQueryDto, [
+  'page',
   'limit',
-  'cursor',
 ] as const) {
   @ApiPropertyOptional({ example: 5 })
   @IsOptional()
@@ -14,4 +15,9 @@ export class AttemptHistoryQueryDto extends PickType(CursorQueryDto, [
   @IsInt()
   @IsPositive()
   examId?: number;
+
+  @ApiPropertyOptional({ enum: AttemptStatus })
+  @IsOptional()
+  @IsEnum(AttemptStatus)
+  status?: AttemptStatus;
 }

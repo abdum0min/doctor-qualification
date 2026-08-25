@@ -1,12 +1,13 @@
-export interface CursorPaginationMeta {
+export interface PaginationMeta {
+  page: number;
   limit: number;
-  nextCursor: string | null;
-  hasMore: boolean;
+  total: number;
+  totalPages: number;
 }
 
-export interface CursorPaginated<T> {
+export interface Paginated<T> {
   items: T[];
-  meta: CursorPaginationMeta;
+  meta: PaginationMeta;
 }
 
 export interface ApiSuccessResponse<T> {
@@ -14,7 +15,7 @@ export interface ApiSuccessResponse<T> {
   statusCode: number;
   message: string;
   data: T;
-  meta?: CursorPaginationMeta;
+  meta?: PaginationMeta;
   timestamp: string;
   path: string;
 }
@@ -28,13 +29,17 @@ export interface ApiErrorResponse {
   path: string;
 }
 
-export function isPaginated<T>(
-  payload: unknown,
-): payload is CursorPaginated<T> {
+export function isPaginated<T>(payload: unknown): payload is Paginated<T> {
+  if (typeof payload !== 'object' || payload === null) {
+    return false;
+  }
+
+  const candidate = payload as Paginated<T>;
+
   return (
-    typeof payload === 'object' &&
-    payload !== null &&
-    Array.isArray((payload as CursorPaginated<T>).items) &&
-    typeof (payload as CursorPaginated<T>).meta === 'object'
+    Array.isArray(candidate.items) &&
+    typeof candidate.meta === 'object' &&
+    candidate.meta !== null &&
+    typeof candidate.meta.total === 'number'
   );
 }

@@ -103,10 +103,8 @@ export function DataSection() {
         <DataTable data={isLoading ? [] : ROWS} columns={COLUMNS} rowKey={(row) => row.id} isLoading={isLoading} />
 
         <TablePagination
-          meta={{ limit: 10, nextCursor: 'demo-cursor', hasMore: true }}
-          onNext={() => {}}
-          onPrev={() => {}}
-          canGoBack
+          meta={{ page: 3, limit: 10, total: 128, totalPages: 13 }}
+          onPageChange={() => {}}
         />
       </Demo>
 

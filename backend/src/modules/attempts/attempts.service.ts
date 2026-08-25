@@ -5,9 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { CursorPaginated } from 'src/common/interfaces/api-response.interface';
-import { decodeCursor } from 'src/common/utils/cursor.util';
-import { buildCursorPaginated } from 'src/common/utils/pagination.util';
+import { Paginated } from 'src/common/interfaces/api-response.interface';
+import { buildPaginated, toSkipTake } from 'src/common/utils/pagination.util';
 import { Prisma } from 'src/generated/prisma/client';
 import {
   AttemptStatus,
@@ -240,22 +239,26 @@ export class AttemptsService {
   async findHistory(
     userId: number,
     query: AttemptHistoryQueryDto,
-  ): Promise<CursorPaginated<AttemptSummaryView>> {
+  ): Promise<Paginated<AttemptSummaryView>> {
     const doctorProfile = await this.requireDoctorProfile(userId);
-    const cursor = decodeCursor(query.cursor);
 
-    const rows = await this.prisma.examAttempt.findMany({
-      where: {
-        doctorProfileId: doctorProfile.id,
-        ...(query.examId ? { examId: query.examId } : {}),
-      },
-      select: summarySelect,
-      take: query.limit + 1,
-      ...(cursor ? { cursor: { id: cursor.id }, skip: 1 } : {}),
-      orderBy: [{ startedAt: 'desc' }, { id: 'desc' }],
-    });
+    const where = {
+      doctorProfileId: doctorProfile.id,
+      ...(query.examId ? { examId: query.examId } : {}),
+      ...(query.status ? { status: query.status } : {}),
+    };
 
-    return buildCursorPaginated(rows, query.limit, 'startedAt');
+    const [rows, total] = await Promise.all([
+      this.prisma.examAttempt.findMany({
+        where,
+        select: summarySelect,
+        ...toSkipTake(query),
+        orderBy: [{ startedAt: 'desc' }, { id: 'desc' }],
+      }),
+      this.prisma.examAttempt.count({ where }),
+    ]);
+
+    return buildPaginated(rows, total, query);
   }
 
   async saveAnswer(

@@ -2,7 +2,7 @@ import { ApiPropertyOptional, PickType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsPositive } from 'class-validator';
 
-import { CursorQueryDto } from 'src/common/dto/pagination-query.dto';
+import { PageQueryDto } from 'src/common/dto/pagination-query.dto';
 import { Difficulty } from 'src/generated/prisma/enums';
 
 /**
@@ -15,10 +15,10 @@ export enum QuestionStatus {
   Inactive = 'inactive',
 }
 
-export class QuestionQueryDto extends PickType(CursorQueryDto, [
+export class QuestionQueryDto extends PickType(PageQueryDto, [
+  'page',
   'limit',
   'search',
-  'cursor',
 ] as const) {
   @ApiPropertyOptional({ example: 3 })
   @IsOptional()

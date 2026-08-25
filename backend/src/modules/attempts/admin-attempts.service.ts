@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { CursorPaginated } from 'src/common/interfaces/api-response.interface';
-import { decodeCursor } from 'src/common/utils/cursor.util';
-import { buildCursorPaginated } from 'src/common/utils/pagination.util';
+import { Paginated } from 'src/common/interfaces/api-response.interface';
+import { buildPaginated, toSkipTake } from 'src/common/utils/pagination.util';
 import { Prisma } from 'src/generated/prisma/client';
 import { AttemptStatus, QualificationLevel } from 'src/generated/prisma/enums';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
@@ -66,18 +65,20 @@ export class AdminAttemptsService {
 
   async findMany(
     query: AdminAttemptQueryDto,
-  ): Promise<CursorPaginated<AdminAttemptRow>> {
-    const cursor = decodeCursor(query.cursor);
+  ): Promise<Paginated<AdminAttemptRow>> {
+    const where = buildWhere(query);
 
-    const rows = await this.prisma.examAttempt.findMany({
-      where: buildWhere(query),
-      select: rowSelect,
-      take: query.limit + 1,
-      ...(cursor ? { cursor: { id: cursor.id }, skip: 1 } : {}),
-      orderBy: [{ startedAt: 'desc' }, { id: 'desc' }],
-    });
+    const [rows, total] = await Promise.all([
+      this.prisma.examAttempt.findMany({
+        where,
+        select: rowSelect,
+        ...toSkipTake(query),
+        orderBy: [{ startedAt: 'desc' }, { id: 'desc' }],
+      }),
+      this.prisma.examAttempt.count({ where }),
+    ]);
 
-    return buildCursorPaginated(rows.map(toRow), query.limit, 'startedAt');
+    return buildPaginated(rows.map(toRow), total, query);
   }
 
   async findOne(id: number): Promise<AdminAttemptDetail> {

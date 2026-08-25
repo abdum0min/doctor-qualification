@@ -112,12 +112,7 @@ export function AttemptHistoryTable({ limit = 10 }: { limit?: number }) {
       </AsyncState>
 
       {data && (
-        <TablePagination
-          meta={data.meta}
-          onNext={table.goNext}
-          onPrev={table.goBack}
-          canGoBack={table.canGoBack}
-        />
+        <TablePagination meta={data.meta} onPageChange={table.setPage} />
       )}
     </div>
   )

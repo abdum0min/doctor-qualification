@@ -1,25 +1,32 @@
-import { CursorPaginated } from '../interfaces/api-response.interface';
-import { encodeCursor } from './cursor.util';
+import { Paginated } from '../interfaces/api-response.interface';
 
-export function buildCursorPaginated<T extends { id: number }>(
-  rows: T[],
-  limit: number,
-  sortBy: keyof T,
-): CursorPaginated<T> {
-  const hasMore = rows.length > limit;
-  const items = hasMore ? rows.slice(0, limit) : rows;
+/** Sahifalash uchun kerak bo'ladigan yagona ikkita maydon. */
+export interface PageParams {
+  page: number;
+  limit: number;
+}
 
-  const last = items[items.length - 1];
+export interface SkipTake {
+  skip: number;
+  take: number;
+}
 
+export function toSkipTake({ page, limit }: PageParams): SkipTake {
+  return { skip: (page - 1) * limit, take: limit };
+}
+
+export function buildPaginated<T>(
+  items: T[],
+  total: number,
+  { page, limit }: PageParams,
+): Paginated<T> {
   return {
     items,
     meta: {
+      page,
       limit,
-      hasMore,
-      nextCursor:
-        hasMore && last
-          ? encodeCursor({ id: last.id, sort: last[sortBy] })
-          : null,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
     },
   };
 }

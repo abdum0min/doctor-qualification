@@ -4,9 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { CursorPaginated } from 'src/common/interfaces/api-response.interface';
-import { decodeCursor } from 'src/common/utils/cursor.util';
-import { buildCursorPaginated } from 'src/common/utils/pagination.util';
+import { Paginated } from 'src/common/interfaces/api-response.interface';
+import { buildPaginated, toSkipTake } from 'src/common/utils/pagination.util';
 import { Prisma } from 'src/generated/prisma/client';
 import { Difficulty } from 'src/generated/prisma/enums';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
@@ -58,20 +57,20 @@ export class QuestionsService {
     private readonly specialtiesService: SpecialtiesService,
   ) {}
 
-  async findMany(
-    query: QuestionQueryDto,
-  ): Promise<CursorPaginated<QuestionView>> {
-    const cursor = decodeCursor(query.cursor);
+  async findMany(query: QuestionQueryDto): Promise<Paginated<QuestionView>> {
+    const where = buildWhere(query);
 
-    const rows = await this.prisma.question.findMany({
-      where: buildWhere(query),
-      select: adminSelect,
-      take: query.limit + 1,
-      ...(cursor ? { cursor: { id: cursor.id }, skip: 1 } : {}),
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-    });
+    const [rows, total] = await Promise.all([
+      this.prisma.question.findMany({
+        where,
+        select: adminSelect,
+        ...toSkipTake(query),
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      }),
+      this.prisma.question.count({ where }),
+    ]);
 
-    return buildCursorPaginated(rows, query.limit, 'createdAt');
+    return buildPaginated(rows, total, query);
   }
 
   async findOne(id: number): Promise<QuestionView> {

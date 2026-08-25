@@ -135,7 +135,7 @@ export function AdminAttemptsPage() {
               value={specialtyId}
               onChange={(value) => {
                 setSpecialtyId(value)
-                table.reset()
+                table.resetPage()
               }}
               placeholder="Barcha mutaxassisliklar"
             />
@@ -145,7 +145,7 @@ export function AdminAttemptsPage() {
               value={status ?? ALL}
               onValueChange={(value) => {
                 setStatus(value === ALL ? null : (value as AttemptStatus))
-                table.reset()
+                table.resetPage()
               }}
             >
               <SelectTrigger className="w-full">
@@ -177,12 +177,7 @@ export function AdminAttemptsPage() {
       </AsyncState>
 
       {data && (
-        <TablePagination
-          meta={data.meta}
-          onNext={table.goNext}
-          onPrev={table.goBack}
-          canGoBack={table.canGoBack}
-        />
+        <TablePagination meta={data.meta} onPageChange={table.setPage} />
       )}
     </PageShell>
   )

@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { CursorPaginated } from 'src/common/interfaces/api-response.interface';
-import { decodeCursor } from 'src/common/utils/cursor.util';
-import { buildCursorPaginated } from 'src/common/utils/pagination.util';
+import { Paginated } from 'src/common/interfaces/api-response.interface';
+import { buildPaginated, toSkipTake } from 'src/common/utils/pagination.util';
 import { Prisma } from 'src/generated/prisma/client';
 import {
   AttemptStatus,
@@ -72,23 +71,25 @@ export class AdminDoctorsService {
 
   async findMany(
     query: AdminDoctorQueryDto,
-  ): Promise<CursorPaginated<AdminDoctorRow>> {
-    const cursor = decodeCursor(query.cursor);
+  ): Promise<Paginated<AdminDoctorRow>> {
+    const where = buildWhere(query);
 
-    const rows = await this.prisma.doctorProfile.findMany({
-      where: buildWhere(query),
-      select: listSelect,
-      take: query.limit + 1,
-      ...(cursor ? { cursor: { id: cursor.id }, skip: 1 } : {}),
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-    });
+    const [rows, total] = await Promise.all([
+      this.prisma.doctorProfile.findMany({
+        where,
+        select: listSelect,
+        ...toSkipTake(query),
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      }),
+      this.prisma.doctorProfile.count({ where }),
+    ]);
 
     const bestScores = await this.bestScoresFor(rows.map((row) => row.id));
 
-    return buildCursorPaginated(
+    return buildPaginated(
       rows.map((row) => toRow(row, bestScores.get(row.id) ?? null)),
-      query.limit,
-      'createdAt',
+      total,
+      query,
     );
   }
 

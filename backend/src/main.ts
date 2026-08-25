@@ -8,7 +8,7 @@ import { AppModule } from './app.module';
 import {
   ApiErrorResponseDto,
   ApiSuccessEnvelope,
-  CursorPaginationMetaDto,
+  PaginationMetaDto,
 } from './common/swagger/api-response.dto';
 import { EnvironmentVariables, isProductionEnv } from './config/env.validation';
 
@@ -66,11 +66,7 @@ async function bootstrap(): Promise<void> {
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig, {
-    extraModels: [
-      ApiSuccessEnvelope,
-      ApiErrorResponseDto,
-      CursorPaginationMetaDto,
-    ],
+    extraModels: [ApiSuccessEnvelope, ApiErrorResponseDto, PaginationMetaDto],
   });
 
   SwaggerModule.setup(`${apiPrefix}/docs`, app, document, {
