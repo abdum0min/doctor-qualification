@@ -4,6 +4,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { useCurrentUser, useLogout } from '@/features/auth'
 import { NotificationBell } from '@/features/notifications'
+import { GlobalSearch } from '@/features/search'
 import { getInitials } from '@/shared/lib/format'
 import { APP, ROUTES } from '@/shared/config'
 import { cn } from '@/shared/lib/utils'
@@ -234,6 +235,8 @@ export function DashboardLayout() {
           <h1 className="truncate text-sm font-semibold">{title}</h1>
 
           <div className="ml-auto flex items-center gap-2">
+            <GlobalSearch />
+
             <ThemeToggle />
 
             <NotificationBell />

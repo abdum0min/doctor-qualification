@@ -56,6 +56,7 @@ export const ENDPOINTS = {
     root: '/admin/announcements',
     audience: '/admin/announcements/audience',
   },
+  search: '/search',
   statistics: {
     overview: '/statistics/overview',
     specialties: '/statistics/specialties',

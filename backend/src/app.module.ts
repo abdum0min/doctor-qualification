@@ -22,6 +22,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { PrismaModule } from './modules/prisma/prisma.module';
 import { QuestionsModule } from './modules/questions/questions.module';
 import { RankingsModule } from './modules/rankings/rankings.module';
+import { SearchModule } from './modules/search/search.module';
 import { SpecialtiesModule } from './modules/specialties/specialties.module';
 import { StatisticsModule } from './modules/statistics/statistics.module';
 
@@ -57,6 +58,7 @@ import { StatisticsModule } from './modules/statistics/statistics.module';
     StatisticsModule,
     RankingsModule,
     NotificationsModule,
+    SearchModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
