@@ -21,6 +21,9 @@ export class DoctorProfileDto {
   @ApiProperty({ example: 'anvar@mail.com' })
   email: string;
 
+  @ApiProperty({ example: '/uploads/avatars/3f2b.jpg', nullable: true })
+  avatarUrl: string | null;
+
   @ApiProperty({ type: DoctorSpecialtyDto, nullable: true })
   specialty: DoctorSpecialtyDto | null;
 

@@ -74,6 +74,17 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1)
   THROTTLE_LIMIT: number = 120;
+
+  /** Yuklangan fayllar saqlanadigan papka (loyiha ildiziga nisbatan). */
+  @IsString()
+  @IsNotEmpty()
+  UPLOAD_DIR: string = 'uploads';
+
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(20)
+  MAX_UPLOAD_SIZE_MB: number = 5;
 }
 
 export function isProductionEnv(nodeEnv: NodeEnv): boolean {

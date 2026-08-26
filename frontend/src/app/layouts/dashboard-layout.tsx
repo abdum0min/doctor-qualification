@@ -5,10 +5,9 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useCurrentUser, useLogout } from '@/features/auth'
 import { NotificationBell } from '@/features/notifications'
 import { GlobalSearch } from '@/features/search'
-import { getInitials } from '@/shared/lib/format'
+import { UserAvatar } from '@/features/uploads'
 import { APP, ROUTES } from '@/shared/config'
 import { cn } from '@/shared/lib/utils'
-import { Avatar, AvatarFallback } from '@/shared/ui/avatar'
 import { BrandLogo, BrandMark } from '@/shared/ui/brand-logo'
 import { Button } from '@/shared/ui/button'
 import {
@@ -127,11 +126,11 @@ function UserMenu() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-lg px-1.5 py-1 transition-colors hover:bg-muted">
-          <Avatar className="size-7">
-            <AvatarFallback className="bg-primary/10 text-primary">
-              {getInitials(user.fullname)}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar
+            fullname={user.fullname}
+            avatarUrl={user.avatarUrl}
+            className="size-7"
+          />
           <span className="hidden text-left sm:block">
             <span className="block text-sm leading-tight font-medium">{user.fullname}</span>
             <span className="block text-xs leading-tight text-muted-foreground">

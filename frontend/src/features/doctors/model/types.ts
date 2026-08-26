@@ -11,6 +11,7 @@ export interface DoctorProfile {
   userId: number
   fullname: string
   email: string
+  avatarUrl: string | null
   specialty: DoctorSpecialty | null
   phone: string | null
   workplace: string | null
@@ -66,6 +67,7 @@ export interface PublicCertificate {
 export interface DoctorPublicProfile {
   id: number
   fullname: string
+  avatarUrl: string | null
   specialty: { id: number; name: string } | null
   workplace: string | null
   experienceYears: number | null

@@ -26,6 +26,7 @@ export interface PublicUser {
   email: string;
   role: UserRole;
   isActive: boolean;
+  avatarUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -115,6 +116,7 @@ export class AuthService {
       email: user.email,
       role: user.role,
       isActive: user.isActive,
+      avatarUrl: user.avatarUrl,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

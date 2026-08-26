@@ -59,6 +59,9 @@ export const ENDPOINTS = {
     audience: '/admin/announcements/audience',
   },
   search: '/search',
+  uploads: {
+    avatar: '/uploads/avatar',
+  },
   settings: {
     root: '/admin/settings',
     examDefaults: '/admin/settings/exam-defaults',

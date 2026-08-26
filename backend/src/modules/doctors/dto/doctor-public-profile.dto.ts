@@ -58,6 +58,9 @@ export class DoctorPublicProfileDto {
   @ApiProperty({ example: 'Karimova Nilufar Baxtiyorovna' })
   fullname: string;
 
+  @ApiPropertyOptional({ nullable: true, example: '/uploads/avatars/3f2b.jpg' })
+  avatarUrl: string | null;
+
   @ApiProperty({ type: PublicSpecialtyDto, nullable: true })
   specialty: PublicSpecialtyDto | null;
 

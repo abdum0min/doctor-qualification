@@ -26,6 +26,7 @@ import { SearchModule } from './modules/search/search.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { SpecialtiesModule } from './modules/specialties/specialties.module';
 import { StatisticsModule } from './modules/statistics/statistics.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { StatisticsModule } from './modules/statistics/statistics.module';
     RankingsModule,
     NotificationsModule,
     SearchModule,
+    UploadsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

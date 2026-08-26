@@ -1,8 +1,7 @@
 import { useCurrentUser } from '@/features/auth'
 import { DoctorProfileForm, useDoctorProfile } from '@/features/doctors'
+import { AvatarUpload, UserAvatar } from '@/features/uploads'
 import type { ApiError } from '@/shared/api'
-import { getInitials } from '@/shared/lib/format'
-import { Avatar, AvatarFallback } from '@/shared/ui/avatar'
 import { AsyncState } from '@/shared/ui/async-state'
 import { Badge } from '@/shared/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
@@ -22,11 +21,11 @@ export function ProfilePage() {
 
       <Card>
         <CardHeader className="flex-row items-center gap-4">
-          <Avatar className="size-14">
-            <AvatarFallback className="bg-primary/10 text-primary">
-              {getInitials(profile?.fullname ?? user?.fullname ?? '')}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar
+            fullname={profile?.fullname ?? user?.fullname ?? ''}
+            avatarUrl={profile?.avatarUrl}
+            className="size-14"
+          />
           <div className="min-w-0 space-y-1">
             <CardTitle className="truncate text-lg">
               {profile?.fullname ?? user?.fullname}
@@ -36,7 +35,16 @@ export function ProfilePage() {
           </div>
         </CardHeader>
 
-        <CardContent>
+        <CardContent className="space-y-6">
+          {profile && (
+            <div className="border-b border-border pb-6">
+              <AvatarUpload
+                fullname={profile.fullname}
+                avatarUrl={profile.avatarUrl}
+              />
+            </div>
+          )}
+
           <AsyncState
             isLoading={isLoading}
             isError={isError}

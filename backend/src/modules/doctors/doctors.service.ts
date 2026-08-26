@@ -23,6 +23,7 @@ export interface DoctorProfileView {
   userId: number;
   fullname: string;
   email: string;
+  avatarUrl: string | null;
   specialty: DoctorSpecialtyView | null;
   phone: string | null;
   workplace: string | null;
@@ -74,7 +75,7 @@ const profileSelect = {
   experienceYears: true,
   createdAt: true,
   updatedAt: true,
-  user: { select: { fullname: true, email: true } },
+  user: { select: { fullname: true, email: true, avatarUrl: true } },
   specialty: { select: { id: true, name: true } },
 } as const;
 
@@ -86,7 +87,7 @@ interface ProfileRow {
   experienceYears: number | null;
   createdAt: Date;
   updatedAt: Date;
-  user: { fullname: string; email: string };
+  user: { fullname: string; email: string; avatarUrl: string | null };
   specialty: DoctorSpecialtyView | null;
 }
 
@@ -112,7 +113,7 @@ export class DoctorsService {
         workplace: true,
         experienceYears: true,
         createdAt: true,
-        user: { select: { fullname: true } },
+        user: { select: { fullname: true, avatarUrl: true } },
         specialty: { select: { id: true, name: true } },
       },
     });
@@ -160,6 +161,7 @@ export class DoctorsService {
     return {
       id: profile.id,
       fullname: profile.user.fullname,
+      avatarUrl: profile.user.avatarUrl,
       specialty: profile.specialty,
       workplace: profile.workplace,
       experienceYears: profile.experienceYears,
@@ -311,5 +313,10 @@ function specialtyRelation(specialtyId: number | null) {
 }
 
 function toView({ user, ...rest }: ProfileRow): DoctorProfileView {
-  return { ...rest, fullname: user.fullname, email: user.email };
+  return {
+    ...rest,
+    fullname: user.fullname,
+    email: user.email,
+    avatarUrl: user.avatarUrl,
+  };
 }

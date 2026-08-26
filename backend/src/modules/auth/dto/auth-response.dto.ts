@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import { UserRole } from 'src/generated/prisma/enums';
 
@@ -18,6 +18,9 @@ export class UserDto {
 
   @ApiProperty({ example: true })
   isActive: boolean;
+
+  @ApiPropertyOptional({ nullable: true, example: '/uploads/avatars/3f2b.jpg' })
+  avatarUrl: string | null;
 
   @ApiProperty({ example: '2026-01-01T10:00:00.000Z' })
   createdAt: Date;

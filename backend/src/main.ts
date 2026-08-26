@@ -1,8 +1,10 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
+import type { ServerResponse } from 'node:http';
 
 import { AppModule } from './app.module';
 import {
@@ -11,9 +13,10 @@ import {
   PaginationMetaDto,
 } from './common/swagger/api-response.dto';
 import { EnvironmentVariables, isProductionEnv } from './config/env.validation';
+import { UploadsService } from './modules/uploads/uploads.service';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = app.get(ConfigService<EnvironmentVariables, true>);
 
   const apiPrefix = config.get('API_PREFIX', { infer: true });
@@ -24,7 +27,24 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix(apiPrefix);
 
   // Swagger UI inline skript/stil ishlatadi — shuning uchun CSP o'chirilgan.
-  app.use(helmet({ contentSecurityPolicy: false }));
+  // Rasmlar boshqa portdagi frontendga berilishi kerak, shuning uchun CORP ochiq.
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
+
+  // Yuklangan rasmlar global prefiksdan tashqarida, `/uploads` ostida beriladi.
+  const uploads = app.get(UploadsService);
+  app.useStaticAssets(uploads.storageRoot, {
+    prefix: uploads.publicPrefix,
+    index: false,
+    // Brauzer fayl turini o'zi taxmin qilib, uni skript sifatida ishga
+    // tushirmasligi uchun.
+    setHeaders: (response: ServerResponse) =>
+      response.setHeader('X-Content-Type-Options', 'nosniff'),
+  });
 
   const allowedOrigins = config
     .get('CORS_ORIGIN', { infer: true })

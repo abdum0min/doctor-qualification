@@ -1,6 +1,8 @@
 import { format, formatDistanceToNow, isValid, parseISO } from 'date-fns'
 import { uz } from 'date-fns/locale'
 
+import { env } from '@/shared/config/env'
+
 export function formatDate(value: string | Date | null | undefined): string {
   if (!value) return '—'
 
@@ -43,4 +45,14 @@ export function formatRelativeTime(value: string | Date | null | undefined): str
   if (!isValid(date)) return '—'
 
   return formatDistanceToNow(date, { addSuffix: true, locale: uz })
+}
+
+/**
+ * Yuklangan fayl yo'li backendga nisbiy keladi (`/uploads/...`), backend esa
+ * boshqa portda turadi — shuning uchun to'liq manzilga aylantiriladi.
+ */
+export function toFileUrl(path: string | null | undefined): string | undefined {
+  if (!path) return undefined
+
+  return path.startsWith('/') ? `${env.apiUrl}${path}` : path
 }

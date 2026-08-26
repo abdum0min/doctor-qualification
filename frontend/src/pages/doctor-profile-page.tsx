@@ -4,11 +4,11 @@ import { Link, useParams } from 'react-router-dom'
 import { QualificationBadge } from '@/features/attempts'
 import { useDoctorPublicProfile } from '@/features/doctors'
 import { RankBadge } from '@/features/rankings'
+import { UserAvatar } from '@/features/uploads'
 import type { ApiError } from '@/shared/api'
 import { ROUTES } from '@/shared/config'
-import { formatDate, getInitials } from '@/shared/lib/format'
+import { formatDate } from '@/shared/lib/format'
 import { AsyncState } from '@/shared/ui/async-state'
-import { Avatar, AvatarFallback } from '@/shared/ui/avatar'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
 import {
@@ -49,11 +49,11 @@ export function DoctorProfilePage() {
           <div className="space-y-5">
             <Card>
               <CardContent className="flex flex-wrap items-start gap-4">
-                <Avatar className="size-14">
-                  <AvatarFallback className="text-base">
-                    {getInitials(data.fullname)}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  fullname={data.fullname}
+                  avatarUrl={data.avatarUrl}
+                  className="size-14 text-base"
+                />
 
                 <div className="min-w-0 flex-1 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
