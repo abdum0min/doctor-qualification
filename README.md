@@ -17,8 +17,8 @@ frontend/   React 19 + Vite + Tailwind v4 + shadcn/ui
 
 | Rol | Imkoniyatlar |
 | --- | --- |
-| **Shifokor** | Ro'yxatdan o'tish, profil va mutaxassislik, imtihon topshirish (taymer, avtosaqlash, davom ettirish), natijalarim sahifasi va javoblar tahlili, shifokorlar reytingidagi o'rni, sertifikat va uni PDF sifatida yuklab olish |
-| **Administrator** | Statistika paneli, shifokorlar boshqaruvi, mutaxassisliklar, imtihonlar va ularning savollari, natijalar, reyting, sertifikatlarni yuklab olish va bekor qilish |
+| **Shifokor** | Ro'yxatdan o'tish, profil va rasm, imtihon topshirish (taymer, avtosaqlash, davom ettirish), natijalarim sahifasi va javoblar tahlili, shifokorlar reytingi va ommaviy profil, bildirishnomalar, global qidiruv, sertifikat va uni PDF sifatida yuklab olish |
+| **Administrator** | Statistika paneli, shifokorlar boshqaruvi, mutaxassisliklar, imtihonlar va ularning savollari (qo'lda yoki CSV/Excel import), natijalar, reyting, e'lonlar, platforma sozlamalari, sertifikatlarni yuklab olish va bekor qilish |
 | **Ochiq (auth talab qilinmaydi)** | Bosh sahifa, mutaxassisliklar va imtihonlar ro'yxati, platforma statistikasi, sertifikatni tekshirish |
 
 ## Muhim qoidalar
@@ -52,6 +52,12 @@ shu to'plamdan belgilangan miqdori tasodifiy tanlanadi.
 **Reyting bali** — `backend/src/domain/ranking.ts`: o'rtacha natija (50%),
 eng yuqori natija (20%), urinishlar hajmi (20%) va o'tish ulushi (10%)
 vaznli o'rtachasi. Faqat o'rtacha ball bilan tartiblash adolatsiz bo'lardi.
+Vaznlar administrator sozlamalaridan olinadi (`/admin/settings`).
+
+**Sozlamaga chiqarilmagan narsalar.** Malaka darajasi chegaralari va sertifikat
+raqami formati (`DOC-YYYY-NNNNNN`) berilgan hujjatlarga yozilgan — ular
+o'zgarmaydi. Sertifikat muddatini o'zgartirish esa faqat yangi beriladigan
+hujjatlarga ta'sir qiladi.
 
 ---
 
@@ -86,8 +92,8 @@ Ilova: `http://localhost:5173`
 ### Demo hisoblar
 
 Seed mutaxassisliklar, imtihonlar va ularning savollarini, shuningdek natijalar,
-reyting va sertifikatlar bo'sh ko'rinmasligi uchun demo shifokorlarni tugallangan
-urinishlari bilan yaratadi.
+reyting, sertifikatlar va bildirishnomalar bo'sh ko'rinmasligi uchun demo
+shifokorlarni tugallangan urinishlari va e'lonlari bilan yaratadi.
 
 Quyidagi hisoblar tayyor turadi (faqat lokal ishlash uchun):
 
@@ -112,6 +118,8 @@ Quyidagi hisoblar tayyor turadi (faqat lokal ishlash uchun):
 | `JWT_SECRET` | Kamida 32 belgi |
 | `CORS_ORIGIN` | Vergul bilan ajratilgan ro'yxat |
 | `PUBLIC_APP_URL` | Sertifikat QR kodi shu manzilga ishora qiladi |
+| `UPLOAD_DIR` | Yuklangan rasmlar papkasi (standart `uploads`) |
+| `MAX_UPLOAD_SIZE_MB` | Bitta rasm uchun chegara (standart 5) |
 | `VITE_API_URL` | Frontend uchun backend manzili |
 
 `.env` git'ga tushmaydi. Yangi o'zgaruvchi qo'shsangiz avval
@@ -138,11 +146,18 @@ npx tsc -b && npm run lint && npm run build
 /specialties                     mutaxassisliklar (ochiq ro'yxat + admin CRUD)
 /exams                           imtihon sozlamalari (ochiq ro'yxat + admin CRUD)
 /admin/exams/:id/questions       imtihon savollari (faqat admin)
+/admin/exams/:id/questions/import CSV yoki Excel fayldan import
 /attempts                        imtihon urinishlari (faqat shifokorning o'ziniki)
 /certificates                    sertifikatlar, PDF yuklab olish, ochiq tekshirish
 /rankings                        shifokorlar reytingi (filtrlar bilan)
+/doctors/:id                     shifokorning ommaviy profili
+/notifications                   bildirishnomalar va ularni o'qilgan deb belgilash
+/search                          global qidiruv (rolga qarab toraytiriladi)
+/uploads/avatar                  profil rasmi
 /statistics                      ochiq va admin statistikasi
 /admin/doctors, /admin/attempts  shifokorlar va natijalar boshqaruvi
+/admin/announcements             ommaviy xabar yuborish va tarixi
+/admin/settings                  platforma sozlamalari
 ```
 
 Barcha ro'yxatlar bir xil sahifalash konvertini qaytaradi:

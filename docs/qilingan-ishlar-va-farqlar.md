@@ -1,11 +1,11 @@
 # Qilingan ishlar va uztoz-rating bilan farqlar
 
-Ushbu hujjat ikki savolga javob beradi: oxirgi bosqichda nima qilindi va bu platforma
+Ushbu hujjat ikki savolga javob beradi: qanday ishlar bajarildi va bu platforma
 `uztoz-rating` (ustoz reytingi) loyihasidan nimasi bilan farq qiladi.
 
 ---
 
-## 1. Oxirgi bosqichda qilingan ishlar
+## 1. Birinchi bosqich — sahifalash, reyting va tuzatishlar
 
 ### 1.1. Sahifalash: cursor → `page` / `limit` / `total`
 
@@ -113,12 +113,112 @@ Commit: `feat: add admin certificate download and demo dataset`.
 
 ---
 
-## 2. `doctor-qualification` va `uztoz-rating` farqlari
+## 2. Ikkinchi bosqich — uztoz-rating dagi yetishmayotgan modullar
+
+### 2.1. Bildirishnomalar va e'lonlar
+
+- `Notification` va `Announcement` modellari; `NotificationType`:
+  `EXAM_PUBLISHED`, `CERTIFICATE_ISSUED`, `CERTIFICATE_REVOKED`, `SYSTEM`.
+- Xabar avtomatik yoziladigan joylar: imtihon **nofaoldan faolga** o'tganda
+  (o'sha yo'nalishdagi faol shifokorlarga), sertifikat berilganda (urinish
+  tranzaksiyasi ichida — sertifikat yozilmasa xabar ham qolmaydi) va sertifikat
+  bekor qilinganda.
+- Xabar yozish hech qachon asosiy amaliyotni to'xtatmaydi: `NotificationsService`
+  xatoni faqat jurnalga yozadi.
+- Admin `/admin/announcements` da ommaviy xabar yuboradi. Auditoriya filtri
+  (mutaxassislik, malaka darajasi) yuborishdan **oldin** nechta shifokor
+  olishini ko'rsatadi. Xabar tarixi va bildirishnomalar bitta tranzaksiyada
+  yoziladi, shuning uchun tarixdagi son har doim haqiqiy.
+- Frontend: sarlavhadagi qo'ng'iroq (o'qilmaganlar nishoni bilan),
+  `/notifications` sahifasi (Barchasi / O'qilmagan) va admin e'lonlar sahifasi.
+
+Commit: `feat: add notifications and admin announcements`.
+
+### 2.2. Global qidiruv
+
+- `GET /search?q=&limit=` — imtihonlar, mutaxassisliklar, shifokorlar va
+  sertifikatlar bo'yicha.
+- Natija **rolga qarab toraytiriladi**: shifokor faqat faol imtihonlarni va
+  **o'z** sertifikatlarini ko'radi, shifokorlar ro'yxati unga umuman ochilmaydi.
+- Frontend: `Ctrl/⌘ + K` bilan ochiladigan buyruq oynasi. Har bir natija rolga
+  mos sahifada ochiladi (sertifikat — ochiq tekshiruv sahifasida).
+
+Commit: `feat: add global search`.
+
+### 2.3. Savollarni CSV/Excel import qilish
+
+- `POST /admin/exams/:examId/questions/import` — `.csv` va `.xlsx`.
+- Ustunlar: `Savol | A | B | C | D | E | F | To'g'ri javob | Daraja`. Tartib
+  muhim emas, `C`–`F` va `Daraja` ixtiyoriy; sarlavhalar o'zbekcha ham,
+  inglizcha ham bo'lishi mumkin (apostrof va registr e'tiborga olinmaydi).
+- Chegaralar formadagi bilan bir xil (matn 10–1000, variant ≤500, 2–6 variant,
+  aynan bitta to'g'ri javob) — parser `question-import.parser.ts` da, 14 ta
+  unit test bilan qoplangan.
+- Fayl **avval to'liq tekshiriladi**, so'ng bitta tranzaksiyada yoziladi. Xato
+  bo'lsa va "xatoli qatorlarni tashlab ketish" yoqilmagan bo'lsa — bazaga hech
+  narsa yozilmaydi. Imtihonda allaqachon bor savollar takror deb tashlanadi.
+- Frontend: import dialogi (natija xulosasi, qator raqami bilan xatolar jadvali,
+  namuna CSV yuklab olish).
+
+Commit: `feat: import exam questions from CSV and Excel`.
+
+### 2.4. Platforma sozlamalari
+
+- `PlatformSettings` — yagona qator: reyting vaznlari va hajm maqsadi,
+  sertifikat amal qilish muddati, yangi imtihon uchun standart qiymatlar.
+- Reyting bali endi sozlamadan olingan vaznlar bilan hisoblanadi
+  (`calculateRankingScore(metrics, config)`); vaznlar yig'indisi 1 dan farq
+  qilsa ham ball 0–100 shkalasida qoladi.
+- Sertifikat muddati **berilgan paytdagi** sozlamadan olinadi va hujjatga
+  yoziladi — sozlama keyin o'zgarsa ham eski sertifikat o'zgarmaydi.
+- **Ataylab sozlamaga chiqarilmagan:** malaka darajasi chegaralari va sertifikat
+  raqami formati. Ular berilgan hujjatlarga yozilgan va o'zgarmasligi kerak;
+  sozlamalar sahifasida buni tushuntiruvchi izoh turadi.
+
+Commit: `feat: add configurable platform settings`.
+
+### 2.5. Shifokorning ommaviy profili
+
+- `GET /doctors/:doctorId` — reyting va qidiruvdan ochiladi.
+- **Email va telefon hech qachon qaytarilmaydi.** Bloklangan hisob profili 404.
+- Ko'rsatiladi: ism, mutaxassislik, ish joyi, tajriba, qo'shilgan sana,
+  yakunlangan urinishlar va o'tish ulushi, o'rtacha/eng yuqori ball, reytingdagi
+  o'rni va **faqat amaldagi** sertifikatlar (har biri ochiq tekshiruvga havola).
+
+Commit: `feat: add public doctor profile`.
+
+### 2.6. Fayl yuklash (avatar)
+
+- `POST /uploads/avatar`, `DELETE /uploads/avatar`.
+- Fayl nomi **hech qachon mijozdan olinmaydi** — tasodifiy nom va MIME turidan
+  kelib chiqqan kengaytma; faqat JPEG, PNG, WebP. SVG ataylab rad etiladi.
+- Yangi rasm avval saqlanadi, keyin eskisi diskdan o'chiriladi — saqlash
+  muvaffaqiyatsiz bo'lsa foydalanuvchi rasmsiz qolmaydi.
+- Rasmlar `/uploads` ostida statik beriladi (`X-Content-Type-Options: nosniff`,
+  CORP ochiq). Papka `.gitignore` ga qo'shilgan.
+- Avatar sarlavhada, profil sahifasida va ommaviy profilda ko'rinadi; rasm yo'q
+  bo'lsa ism bosh harflari chiqadi.
+
+Commit: `feat: add avatar uploads`.
+
+### 2.7. Demo ma'lumot va tekshiruv
+
+- Seed endi bildirishnomalar va e'lonlarni ham yaratadi — qo'ng'iroq bo'sh
+  ko'rinmaydi (`feat: seed demo notifications and announcements`).
+- Backend: 46 jest testi, `typecheck`/`lint`/`build` toza.
+- API smoke: 21 to'plam, ~570 tekshiruv.
+- Brauzer (Playwright) e2e: 11 to'plam, 190 dan ortiq tekshiruv.
+- Demo baza: 9 shifokor · 11 imtihon · 43 savol · 16 urinish · 12 sertifikat ·
+  31 xabar · 3 e'lon.
+
+---
+
+## 3. `doctor-qualification` va `uztoz-rating` farqlari
 
 Ikkala loyiha ham "foydalanuvchi test topshiradi → ball oladi → reytingga tushadi →
 sertifikat oladi" oqimini quradi, lekin domeni va bir nechta qarorlari boshqacha.
 
-### 2.1. Domen farqi
+### 3.1. Domen farqi
 
 | | `uztoz-rating` | `doctor-qualification` |
 | --- | --- | --- |
@@ -131,7 +231,7 @@ Eng katta konseptual farq: `uztoz-rating` da natija asosan **reyting** uchun, bu
 esa natija **malaka darajasini** belgilaydi va sertifikat shu darajani tasdiqlaydi.
 Shuning uchun bu loyihada `domain/qualification.ts` markaziy o'rin egallaydi.
 
-### 2.2. Bu loyihada ataylab boshqacha qilingan narsalar
+### 3.2. Bu loyihada ataylab boshqacha qilingan narsalar
 
 - **Sertifikat raqami** — `req.txt` talabi bo'yicha ketma-ket format
   `DOC-YYYY-NNNNNN`, Postgres ketma-ketligidan (`certificate_number_seq`).
@@ -147,25 +247,22 @@ Shuning uchun bu loyihada `domain/qualification.ts` markaziy o'rin egallaydi.
   kirmasdan. Sertifikat muddati va bekor qilish (`revoke`) ham bor.
 - **Ochiq landing sahifasi** va ochiq statistika.
 
-### 2.3. `uztoz-rating` da bor, bu yerda hali yo'q
+### 3.3. `uztoz-rating` bilan modul solishtiruvi
 
-Bu — kelajakdagi ish ro'yxati (bildirishnoma va global qidiruv "oxirgi ish" deb
-kelishilgan):
+| Imkoniyat | Holati |
+| --- | --- |
+| Bildirishnomalar / e'lonlar | ✅ qo'shildi (2.1) |
+| Global qidiruv | ✅ qo'shildi (2.2) |
+| Savollarni CSV/Excel import | ✅ qo'shildi (2.3) |
+| Platforma sozlamalari | ✅ qo'shildi (2.4) |
+| Ommaviy profil sahifasi | ✅ qo'shildi (2.5) |
+| Fayl yuklash | ✅ qo'shildi (2.6) — hozircha faqat avatar |
+| Hududlar ierarxiyasi | ❌ qo'shilmagan — `uztoz-rating` da viloyat → tuman → maktab zanjiri o'qituvchi profilining asosiy qismi. Tibbiyotda unga mos keladigan talab `req.txt` da yo'q, shuning uchun ataylab olinmadi. Kerak bo'lsa `DoctorProfile.workplace` matn maydonini muassasa jadvaliga almashtirish kifoya. |
 
-| Imkoniyat | `uztoz-rating` dagi holati | Izoh |
-| --- | --- | --- |
-| Bildirishnomalar / e'lonlar | `notifications` moduli, `admin/announcements`, `notifications-page.tsx` | Rejalashtirilgan, oxirgi navbatda |
-| Global qidiruv | `search` moduli | Rejalashtirilgan, oxirgi navbatda |
-| Savollarni CSV/Excel import | `modules/questions/import` | Katta savol bazasi uchun foydali |
-| Platforma sozlamalari | `settings` moduli + `admin-settings-page.tsx` | Hozircha sozlamalar `.env` va imtihon darajasida |
-| Fayl yuklash | `uploads` moduli | Avatar / ilova fayllari uchun |
-| Hududlar ierarxiyasi | `locations` moduli (viloyat → tuman → maktab) | Tibbiyotda muassasa ierarxiyasi kerak bo'lsa qo'shiladi |
-| Ommaviy profil sahifasi | `teacher-profile-page.tsx` | Shifokor profili hozircha faqat o'ziga ko'rinadi |
-
-### 2.4. Umumiy bo'lgan yondashuvlar
+### 3.4. Umumiy bo'lgan yondashuvlar
 
 Ikkala loyihada ham: rol asosidagi `admin/*` marshrutlari, test ichidagi savol
 boshqaruvi (`admin/tests/:testId/questions` ↔ `admin/exams/:examId/questions`),
-reyting moduli, sertifikat moduli va alohida "Natijalar" sahifasi. Oxirgi bosqichdagi
-ishlarning bir qismi aynan shu tuzilishga yaqinlashtirish edi — chunki u amalda
-o'zini oqlagan.
+reyting moduli, sertifikat moduli, bildirishnomalar, global qidiruv, savol importi,
+platforma sozlamalari va alohida "Natijalar" sahifasi. Ikkinchi bosqichdagi ishlar
+aynan shu tuzilishga yaqinlashtirish edi — chunki u amalda o'zini oqlagan.
