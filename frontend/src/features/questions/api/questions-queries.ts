@@ -6,6 +6,7 @@ import type { ApiError } from '@/shared/api'
 import { queryClient } from '@/shared/lib/query-client'
 import { questionsApi, type QuestionListParams } from './questions-api'
 import type { QuestionPayload } from '../model/schemas'
+import type { ImportOptions } from '../model/types'
 
 export const questionKeys = {
   all: ['questions'] as const,
@@ -56,6 +57,26 @@ export function useDeleteQuestion(examId: number) {
     onSuccess: () => {
       invalidateQuestions()
       toast.success("Savol o'chirildi")
+    },
+    onError: (error: ApiError) => toast.error(error.message),
+  })
+}
+
+export function useImportQuestions(examId: number) {
+  return useMutation({
+    mutationFn: (options: ImportOptions) =>
+      questionsApi.import(examId, options),
+    onSuccess: (result) => {
+      invalidateQuestions()
+
+      // Xatolar dialog ichida batafsil ko'rsatiladi — bu yerda faqat xulosa.
+      if (result.imported > 0) {
+        toast.success(`${result.imported} ta savol import qilindi`)
+      } else if (result.failed > 0) {
+        toast.error('Faylda xatolar bor — hech narsa import qilinmadi')
+      } else {
+        toast.info('Yangi savol topilmadi')
+      }
     },
     onError: (error: ApiError) => toast.error(error.message),
   })

@@ -2,6 +2,7 @@ export {
   questionKeys,
   useCreateQuestion,
   useDeleteQuestion,
+  useImportQuestions,
   useQuestions,
   useUpdateQuestion,
 } from './api/questions-queries'
@@ -17,6 +18,8 @@ export {
   DIFFICULTIES,
   DIFFICULTY_LABELS,
   type Difficulty,
+  type ImportResult,
+  type ImportRowError,
   type Question,
   type QuestionFilters,
   type QuestionOption,
@@ -25,3 +28,4 @@ export {
 export { DifficultyBadge } from './ui/difficulty-badge'
 export { DifficultySelect } from './ui/difficulty-select'
 export { QuestionDialog } from './ui/question-dialog'
+export { QuestionImportDialog } from './ui/question-import-dialog'

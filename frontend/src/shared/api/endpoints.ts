@@ -22,6 +22,7 @@ export const ENDPOINTS = {
     byExam: (examId: number) => `/admin/exams/${examId}/questions`,
     byId: (examId: number, id: number) =>
       `/admin/exams/${examId}/questions/${id}`,
+    import: (examId: number) => `/admin/exams/${examId}/questions/import`,
   },
   exams: {
     root: '/exams',

@@ -15,6 +15,18 @@ export const http = {
   patch: <T>(url: string, body?: unknown) => unwrap<T>(api.patch(url, body)),
   delete: <T>(url: string) => unwrap<T>(api.delete(url)),
 
+  /**
+   * Fayl yuborish uchun: Content-Type'ni brauzer o'zi qo'yadi (multipart
+   * chegarasi bilan), import esa odatdagi so'rovdan uzoqroq davom etishi mumkin.
+   */
+  upload: <T>(url: string, form: FormData) =>
+    unwrap<T>(
+      api.post(url, form, {
+        headers: { 'Content-Type': undefined },
+        timeout: 120_000,
+      }),
+    ),
+
   async list<T>(url: string, params?: unknown): Promise<Paginated<T>> {
     const response = await api.get<ApiResponse<T[]>>(url, { params })
 

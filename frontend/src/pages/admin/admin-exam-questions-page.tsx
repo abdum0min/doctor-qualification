@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ArrowLeft, Pencil, Plus, TriangleAlert, Trash2 } from 'lucide-react'
+import { ArrowLeft, Pencil, Plus, TriangleAlert, Trash2, Upload } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 
 import { useAdminExam } from '@/features/exams'
@@ -7,6 +7,7 @@ import {
   DifficultyBadge,
   DifficultySelect,
   QuestionDialog,
+  QuestionImportDialog,
   useDeleteQuestion,
   useQuestions,
   type Difficulty,
@@ -150,12 +151,21 @@ export function AdminExamQuestionsPage() {
           </div>
         }
         action={
-          <QuestionDialog examId={id}>
-            <Button>
-              <Plus />
-              Savol qo'shish
-            </Button>
-          </QuestionDialog>
+          <div className="flex flex-wrap gap-2">
+            <QuestionImportDialog examId={id}>
+              <Button variant="outline">
+                <Upload />
+                Fayldan import
+              </Button>
+            </QuestionImportDialog>
+
+            <QuestionDialog examId={id}>
+              <Button>
+                <Plus />
+                Savol qo'shish
+              </Button>
+            </QuestionDialog>
+          </div>
         }
       >
         <AsyncState

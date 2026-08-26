@@ -39,3 +39,22 @@ export interface QuestionFilters {
   difficulty?: Difficulty
   status?: QuestionStatus
 }
+
+export interface ImportRowError {
+  row: number
+  message: string
+}
+
+export interface ImportResult {
+  totalRows: number
+  imported: number
+  duplicates: number
+  failed: number
+  errors: ImportRowError[]
+}
+
+export interface ImportOptions {
+  file: File
+  skipInvalidRows?: boolean
+  defaultDifficulty?: Difficulty
+}
