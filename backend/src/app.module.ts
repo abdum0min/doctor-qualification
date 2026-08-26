@@ -18,6 +18,7 @@ import { CertificatesModule } from './modules/certificates/certificates.module';
 import { DoctorsModule } from './modules/doctors/doctors.module';
 import { ExamsModule } from './modules/exams/exams.module';
 import { HealthModule } from './modules/health/health.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 import { QuestionsModule } from './modules/questions/questions.module';
 import { RankingsModule } from './modules/rankings/rankings.module';
@@ -55,6 +56,7 @@ import { StatisticsModule } from './modules/statistics/statistics.module';
     CertificatesModule,
     StatisticsModule,
     RankingsModule,
+    NotificationsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

@@ -1,5 +1,7 @@
 import {
+  Bell,
   LayoutDashboard,
+  Megaphone,
   ClipboardList,
   Award,
   BarChart3,
@@ -27,6 +29,7 @@ const DOCTOR_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.results, label: 'Natijalarim', icon: ResultsIcon },
   { to: ROUTES.ranking, label: 'Reyting', icon: Trophy },
   { to: ROUTES.certificates, label: 'Sertifikatlar', icon: Award },
+  { to: ROUTES.notifications, label: 'Bildirishnomalar', icon: Bell },
   { to: ROUTES.profile, label: 'Profil', icon: User },
 ]
 
@@ -38,6 +41,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.adminAttempts, label: 'Natijalar', icon: BarChart3 },
   { to: ROUTES.adminRankings, label: 'Reyting', icon: Trophy },
   { to: ROUTES.adminCertificates, label: 'Sertifikatlar', icon: Award },
+  { to: ROUTES.adminAnnouncements, label: "E'lonlar", icon: Megaphone },
 ]
 
 export function navItemsForRole(role: UserRole | undefined): NavItem[] {

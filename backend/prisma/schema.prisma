@@ -22,6 +22,8 @@ model User {
   isActive Boolean  @default(true)
 
   doctorProfile DoctorProfile?
+  notifications Notification[]
+  announcements Announcement[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -259,4 +261,52 @@ model Certificate {
 
   @@index([doctorProfileId, issuedAt])
   @@index([status])
+}
+
+enum NotificationType {
+  EXAM_PUBLISHED
+  CERTIFICATE_ISSUED
+  CERTIFICATE_REVOKED
+  SYSTEM
+}
+
+/// Foydalanuvchiga yo'naltirilgan bitta xabar. Matn yozilgan paytda
+/// nusxalanadi — manba imtihon yoki sertifikat keyin o'zgarsa ham
+/// xabar tarixi o'zgarmaydi.
+model Notification {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type   NotificationType
+  title  String           @db.VarChar(200)
+  body   String           @db.VarChar(500)
+  link   String?          @db.VarChar(255)
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+}
+
+/// Admin yuborgan ommaviy xabar. Har bir qabul qiluvchiga alohida
+/// `Notification` yoziladi, bu jadval esa yuborish tarixini saqlaydi.
+model Announcement {
+  id    Int     @id @default(autoincrement())
+  title String  @db.VarChar(200)
+  body  String  @db.VarChar(500)
+  link  String? @db.VarChar(255)
+
+  /// Qabul qiluvchilar filtri o'qiladigan matn ko'rinishida saqlanadi —
+  /// mutaxassislik nomi keyin o'zgarsa ham yuborilgan xabar tarixi o'zgarmaydi.
+  audience       String @db.VarChar(200)
+  recipientCount Int
+
+  sentById Int?
+  sentBy   User? @relation(fields: [sentById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }

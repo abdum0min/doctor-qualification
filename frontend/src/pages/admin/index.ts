@@ -1,3 +1,4 @@
+export { AdminAnnouncementsPage } from './admin-announcements-page'
 export { AdminAttemptsPage } from './admin-attempts-page'
 export { AdminCertificatesPage } from './admin-certificates-page'
 export { AdminDashboardPage } from './admin-dashboard-page'

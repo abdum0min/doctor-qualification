@@ -15,9 +15,11 @@ import {
 import { Prisma } from 'src/generated/prisma/client';
 import {
   CertificateStatus,
+  NotificationType,
   QualificationLevel,
   UserRole,
 } from 'src/generated/prisma/enums';
+import { NotificationsService } from 'src/modules/notifications/notifications.service';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
 
 import { AdminCertificateQueryDto } from './dto/admin-certificate-query.dto';
@@ -82,7 +84,10 @@ interface IssuableAttempt {
 
 @Injectable()
 export class CertificatesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /**
    * Urinish yakunlanayotgan tranzaksiya ichida chaqiriladi — natija va
@@ -111,15 +116,18 @@ export class CertificatesService {
         exam: {
           select: { title: true, specialty: { select: { name: true } } },
         },
-        doctorProfile: { select: { user: { select: { fullname: true } } } },
+        doctorProfile: {
+          select: { user: { select: { id: true, fullname: true } } },
+        },
       },
     });
 
     const issuedAt = new Date();
+    const certificateId = buildCertificateId(await nextSequence(tx), issuedAt);
 
     await tx.certificate.create({
       data: {
-        certificateId: buildCertificateId(await nextSequence(tx), issuedAt),
+        certificateId,
         attemptId: attempt.id,
         doctorProfileId: attempt.doctorProfileId,
         doctorFullname: details.doctorProfile.user.fullname,
@@ -129,6 +137,17 @@ export class CertificatesService {
         qualification: attempt.qualification,
         issuedAt,
         expiresAt: certificateExpiryDate(issuedAt),
+      },
+    });
+
+    // Xabar ham shu tranzaksiyada — sertifikat yozilmasa xabar ham qolmaydi.
+    await tx.notification.create({
+      data: {
+        userId: details.doctorProfile.user.id,
+        type: NotificationType.CERTIFICATE_ISSUED,
+        title: 'Sertifikat berildi',
+        body: `"${details.exam.title}" imtihoni bo'yicha ${certificateId} raqamli sertifikat rasmiylashtirildi.`,
+        link: '/certificates',
       },
     });
   }
@@ -227,7 +246,12 @@ export class CertificatesService {
   ): Promise<CertificateView> {
     const certificate = await this.prisma.certificate.findUnique({
       where: { certificateId },
-      select: { id: true, status: true },
+      select: {
+        id: true,
+        status: true,
+        examTitle: true,
+        doctorProfile: { select: { userId: true } },
+      },
     });
 
     if (!certificate) {
@@ -238,7 +262,7 @@ export class CertificatesService {
       throw new ConflictException('This certificate is already revoked');
     }
 
-    return this.prisma.certificate.update({
+    const revoked = await this.prisma.certificate.update({
       where: { id: certificate.id },
       data: {
         status: CertificateStatus.REVOKED,
@@ -247,6 +271,17 @@ export class CertificatesService {
       },
       select: certificateSelect,
     });
+
+    await this.notifications.notify(certificate.doctorProfile.userId, {
+      type: NotificationType.CERTIFICATE_REVOKED,
+      title: 'Sertifikat bekor qilindi',
+      body: dto.reason
+        ? `${certificateId} raqamli sertifikat bekor qilindi. Sabab: ${dto.reason}`
+        : `${certificateId} raqamli sertifikat bekor qilindi.`,
+      link: '/certificates',
+    });
+
+    return revoked;
   }
 
   async verify(certificateId: string): Promise<CertificateVerificationView> {

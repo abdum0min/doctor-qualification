@@ -1,8 +1,9 @@
 import { useMemo, useState, type ReactNode } from 'react'
-import { Bell, LogOut, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { LogOut, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 
 import { useCurrentUser, useLogout } from '@/features/auth'
+import { NotificationBell } from '@/features/notifications'
 import { getInitials } from '@/shared/lib/format'
 import { APP, ROUTES } from '@/shared/config'
 import { cn } from '@/shared/lib/utils'
@@ -235,10 +236,7 @@ export function DashboardLayout() {
           <div className="ml-auto flex items-center gap-2">
             <ThemeToggle />
 
-            <Button variant="ghost" size="icon" className="relative" aria-label="Bildirishnomalar">
-              <Bell />
-              <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-destructive ring-2 ring-card" />
-            </Button>
+            <NotificationBell />
 
             <UserMenu />
           </div>

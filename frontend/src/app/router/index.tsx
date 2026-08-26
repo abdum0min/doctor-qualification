@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 
 import {
+  AdminAnnouncementsPage,
   AdminAttemptsPage,
   AdminCertificatesPage,
   AdminDashboardPage,
@@ -17,6 +18,7 @@ import { LandingPage } from '@/pages/landing'
 import { ExamsPage } from '@/pages/exams-page'
 import { LoginPage } from '@/pages/login-page'
 import { NotFoundPage } from '@/pages/not-found-page'
+import { NotificationsPage } from '@/pages/notifications-page'
 import { ProfilePage } from '@/pages/profile-page'
 import { RankingPage } from '@/pages/ranking-page'
 import { ResultsPage } from '@/pages/results-page'
@@ -67,6 +69,10 @@ export function AppRouter() {
             <Route path={ROUTES.results} element={<ResultsPage />} />
             <Route path={ROUTES.ranking} element={<RankingPage />} />
             <Route path={ROUTES.certificates} element={<CertificatesPage />} />
+            <Route
+              path={ROUTES.notifications}
+              element={<NotificationsPage />}
+            />
             <Route path={ROUTES.profile} element={<ProfilePage />} />
           </Route>
 
@@ -80,6 +86,10 @@ export function AppRouter() {
               element={<AdminExamQuestionsPage />}
             />
             <Route path={ROUTES.adminAttempts} element={<AdminAttemptsPage />} />
+            <Route
+              path={ROUTES.adminAnnouncements}
+              element={<AdminAnnouncementsPage />}
+            />
             <Route path={ROUTES.adminRankings} element={<RankingPage />} />
             <Route
               path={ROUTES.adminCertificates}

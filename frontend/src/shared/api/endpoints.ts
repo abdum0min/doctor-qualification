@@ -46,6 +46,16 @@ export const ENDPOINTS = {
     top: '/rankings/top',
     me: '/rankings/me',
   },
+  notifications: {
+    root: '/notifications',
+    unreadCount: '/notifications/unread-count',
+    readAll: '/notifications/read-all',
+    read: (id: number) => `/notifications/${id}/read`,
+  },
+  announcements: {
+    root: '/admin/announcements',
+    audience: '/admin/announcements/audience',
+  },
   statistics: {
     overview: '/statistics/overview',
     specialties: '/statistics/specialties',

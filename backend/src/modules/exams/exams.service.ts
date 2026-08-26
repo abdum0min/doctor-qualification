@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 
 import { Prisma } from 'src/generated/prisma/client';
+import { NotificationType } from 'src/generated/prisma/enums';
+import { NotificationsService } from 'src/modules/notifications/notifications.service';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
 import { SpecialtiesService } from 'src/modules/specialties/specialties.service';
 
@@ -47,6 +49,7 @@ export class ExamsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly specialtiesService: SpecialtiesService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /** Savoli yetmaydigan imtihon shifokorga ko'rsatilmaydi. */
@@ -106,10 +109,16 @@ export class ExamsService {
   async create(dto: CreateExamDto): Promise<ExamView> {
     await this.specialtiesService.ensureActive(dto.specialtyId);
 
-    return this.prisma.exam.create({
+    const exam = await this.prisma.exam.create({
       data: { ...dto, isActive: dto.isActive ?? false },
       select: examSelect,
     });
+
+    if (exam.isActive) {
+      await this.announceExam(exam);
+    }
+
+    return exam;
   }
 
   async update(id: number, dto: UpdateExamDto): Promise<ExamView> {
@@ -134,10 +143,31 @@ export class ExamsService {
       await this.ensureEnoughQuestions(id, questionCount);
     }
 
-    return this.prisma.exam.update({
+    const exam = await this.prisma.exam.update({
       where: { id },
       data: dto,
       select: examSelect,
+    });
+
+    // Xabar faqat nofaoldan faolga o'tishda ketadi — har tahrirda emas.
+    if (!current.isActive && exam.isActive) {
+      await this.announceExam(exam);
+    }
+
+    return exam;
+  }
+
+  /** Imtihon nashr qilinganda shu yo'nalishdagi shifokorlarga xabar beriladi. */
+  private async announceExam(exam: ExamView): Promise<void> {
+    const userIds = await this.notifications.activeUserIdsBySpecialty(
+      exam.specialty.id,
+    );
+
+    await this.notifications.notifyMany(userIds, {
+      type: NotificationType.EXAM_PUBLISHED,
+      title: `Yangi imtihon: ${exam.title}`,
+      body: `${exam.specialty.name} yo'nalishida yangi imtihon ochildi — ${exam.questionCount} ta savol, ${exam.timeLimitMinutes} daqiqa.`,
+      link: '/exams',
     });
   }
 

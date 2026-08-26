@@ -14,6 +14,7 @@ export const ROUTES = {
   results: '/results',
   ranking: '/ranking',
   certificates: '/certificates',
+  notifications: '/notifications',
   profile: '/profile',
 
   // Administrator (ADMIN)
@@ -25,6 +26,7 @@ export const ROUTES = {
   adminRankings: '/admin/rankings',
   adminAttempts: '/admin/attempts',
   adminCertificates: '/admin/certificates',
+  adminAnnouncements: '/admin/announcements',
   designSystem: '/design-system',
 } as const
 
