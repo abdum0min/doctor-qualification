@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { LogOut, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 
-import { useCurrentUser, useLogout } from '@/features/auth'
+import { useCurrentUser, useIsAdmin, useLogout } from '@/features/auth'
 import { NotificationBell } from '@/features/notifications'
 import { GlobalSearch } from '@/features/search'
 import { UserAvatar } from '@/features/uploads'
@@ -162,6 +162,7 @@ export function DashboardLayout() {
   )
   const { pathname } = useLocation()
   const user = useCurrentUser()
+  const isAdmin = useIsAdmin()
 
   const visibleItems = useMemo(() => navItemsForRole(user?.role), [user?.role])
 
@@ -246,7 +247,9 @@ export function DashboardLayout() {
 
             <ThemeToggle />
 
-            <NotificationBell />
+            {/* Xabarlar faqat shifokorlarga yoziladi — adminda qo'ng'iroq
+                doim bo'sh turardi, shuning uchun ko'rsatilmaydi. */}
+            {!isAdmin && <NotificationBell />}
 
             <UserMenu />
           </div>
