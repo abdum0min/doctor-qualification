@@ -15,8 +15,6 @@ import { MyRankingDto, RankingRowDto } from './dto/ranking.dto';
 import { RankingsQueryDto } from './dto/rankings-query.dto';
 import { RankingsService } from './rankings.service';
 
-const TOP_LIMIT = 5;
-
 @ApiTags('Rankings')
 @ApiBearerAuth('access-token')
 @ApiErrorResponses(401)
@@ -39,10 +37,13 @@ export class RankingsController {
 
   @Get('top')
   @ResponseMessage('Top doctors')
-  @ApiOperation({ summary: 'Eng yuqori natijali shifokorlar' })
+  @ApiOperation({
+    summary: 'Eng yuqori natijali shifokorlar',
+    description: 'Nechta qator qaytishini `limit` belgilaydi (standart 10).',
+  })
   @ApiDataResponse(RankingRowDto, { isArray: true })
   findTop(@Query() query: RankingsQueryDto) {
-    return this.rankingsService.findTop(query, TOP_LIMIT);
+    return this.rankingsService.findTop(query, query.limit);
   }
 
   @Roles(UserRole.DOCTOR)

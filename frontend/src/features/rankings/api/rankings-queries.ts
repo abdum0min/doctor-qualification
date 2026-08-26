@@ -10,10 +10,17 @@ export const rankingKeys = {
   me: (params: RankingParams) => [...rankingKeys.all, 'me', params] as const,
 }
 
+/**
+ * Reyting har so'rovda qayta hisoblanadi, shuning uchun sahifalar orasida
+ * qatnaganda keshdan foydalanamiz.
+ */
+const RANKING_STALE_MS = 60_000
+
 export function useRankings(params: RankingParams) {
   return useQuery({
     queryKey: rankingKeys.list(params),
     queryFn: () => rankingsApi.list(params),
+    staleTime: RANKING_STALE_MS,
   })
 }
 
@@ -21,6 +28,7 @@ export function useTopDoctors(params: RankingParams = {}) {
   return useQuery({
     queryKey: rankingKeys.top(params),
     queryFn: () => rankingsApi.top(params),
+    staleTime: RANKING_STALE_MS,
   })
 }
 
@@ -28,5 +36,6 @@ export function useMyRanking(params: RankingParams = {}) {
   return useQuery({
     queryKey: rankingKeys.me(params),
     queryFn: () => rankingsApi.me(params),
+    staleTime: RANKING_STALE_MS,
   })
 }

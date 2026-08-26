@@ -25,21 +25,44 @@ const SETTINGS_SELECT = {
   updatedAt: true,
 } as const;
 
+/**
+ * Sozlamalar kamdan-kam o'zgaradi, lekin reyting va sertifikat modullari uni
+ * har so'rovda o'qiydi. Qisqa muddatli kesh baza aylanmalarini kamaytiradi;
+ * yozuvda kesh darhol tozalanadi, shuning uchun eskirgan qiymat qaytmaydi.
+ */
+const CACHE_TTL_MS = 30_000;
+
 @Injectable()
 export class SettingsService {
+  private cached: { value: PlatformSettingsDto; expiresAt: number } | null =
+    null;
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Qator migratsiyada yaratilmaydi — birinchi murojaatda standart qiymatlar
    * bilan paydo bo'ladi, shuning uchun bo'sh bazada ham ishlaydi.
    */
-  find(): Promise<PlatformSettingsDto> {
-    return this.prisma.platformSettings.upsert({
-      where: { id: SETTINGS_ID },
-      update: {},
-      create: { id: SETTINGS_ID },
-      select: SETTINGS_SELECT,
-    });
+  async find(): Promise<PlatformSettingsDto> {
+    if (this.cached && this.cached.expiresAt > Date.now()) {
+      return this.cached.value;
+    }
+
+    // `upsert` har safar yozuv qiladi — avval o'qiymiz, qator yo'q bo'lsagina
+    // yaratamiz. Bu odatiy holatda bitta o'qish aylanmasi bilan cheklaydi.
+    const value =
+      (await this.prisma.platformSettings.findUnique({
+        where: { id: SETTINGS_ID },
+        select: SETTINGS_SELECT,
+      })) ??
+      (await this.prisma.platformSettings.create({
+        data: { id: SETTINGS_ID },
+        select: SETTINGS_SELECT,
+      }));
+
+    this.cached = { value, expiresAt: Date.now() + CACHE_TTL_MS };
+
+    return value;
   }
 
   async update(dto: UpdateSettingsDto): Promise<PlatformSettingsDto> {
@@ -58,11 +81,15 @@ export class SettingsService {
       );
     }
 
-    return this.prisma.platformSettings.update({
+    const updated = await this.prisma.platformSettings.update({
       where: { id: SETTINGS_ID },
       data: dto,
       select: SETTINGS_SELECT,
     });
+
+    this.cached = { value: updated, expiresAt: Date.now() + CACHE_TTL_MS };
+
+    return updated;
   }
 
   /** Reyting moduli faqat shu qismini oladi. */
