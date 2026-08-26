@@ -26,6 +26,12 @@ import { navItemsForRole, ROLE_LABELS, type NavItem } from './nav-items'
 
 const COLLAPSED_KEY = 'app_sidebar_collapsed'
 
+/** Yon menyuda o'z havolasi bo'lmagan sahifalar sarlavhasi. */
+const EXTRA_TITLES: [string, string][] = [
+  [ROUTES.attempt.replace('/:attemptId', ''), 'Imtihon'],
+  [ROUTES.doctorProfile.replace('/:doctorId', ''), 'Shifokor profili'],
+]
+
 function matchesRoute(pathname: string, target: string): boolean {
   if (target === '/') return pathname === target
   return pathname === target || pathname.startsWith(`${target}/`)
@@ -161,7 +167,9 @@ export function DashboardLayout() {
   const visibleItems = useMemo(() => navItemsForRole(user?.role), [user?.role])
 
   const title =
-    activeNavItem(pathname, visibleItems)?.label ?? APP.name
+    activeNavItem(pathname, visibleItems)?.label ??
+    EXTRA_TITLES.find(([route]) => matchesRoute(pathname, route))?.[1] ??
+    APP.name
 
   const toggleCollapsed = () => {
     setCollapsed((value) => {

@@ -11,12 +11,22 @@ export const doctorKeys = {
   all: ['doctors'] as const,
   me: ['doctors', 'me'] as const,
   overview: ['doctors', 'overview'] as const,
+  publicProfile: (doctorId: number) =>
+    ['doctors', 'public', doctorId] as const,
 }
 
 export function useDoctorOverview() {
   return useQuery({
     queryKey: doctorKeys.overview,
     queryFn: () => doctorsApi.overview(),
+  })
+}
+
+export function useDoctorPublicProfile(doctorId: number) {
+  return useQuery({
+    queryKey: doctorKeys.publicProfile(doctorId),
+    queryFn: () => doctorsApi.publicProfile(doctorId),
+    enabled: Number.isFinite(doctorId) && doctorId > 0,
   })
 }
 

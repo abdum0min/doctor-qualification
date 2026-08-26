@@ -52,3 +52,33 @@ export interface DoctorOverview {
   profile: DoctorProfile
   stats: DoctorStats
 }
+
+export interface PublicCertificate {
+  certificateId: string
+  examTitle: string
+  qualification: QualificationLevel
+  score: number
+  status: CertificateStatus
+  issuedAt: string
+  expiresAt: string
+}
+
+export interface DoctorPublicProfile {
+  id: number
+  fullname: string
+  specialty: { id: number; name: string } | null
+  workplace: string | null
+  experienceYears: number | null
+  joinedAt: string
+  completedAttempts: number
+  passedAttempts: number
+  averageScore: number | null
+  bestScore: number | null
+  currentQualification: QualificationLevel | null
+  ranking: {
+    position: number | null
+    totalDoctors: number
+    score: number | null
+  }
+  certificates: PublicCertificate[]
+}

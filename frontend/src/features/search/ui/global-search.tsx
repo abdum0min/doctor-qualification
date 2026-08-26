@@ -182,7 +182,7 @@ export function GlobalSearch() {
                   <CommandItem
                     key={doctor.id}
                     value={`doctor-${doctor.id}`}
-                    onSelect={() => go(ROUTES.adminDoctors)}
+                    onSelect={() => go(buildRoute.doctor(doctor.id))}
                   >
                     <User />
                     <span className="min-w-0">

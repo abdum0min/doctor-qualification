@@ -76,8 +76,16 @@ export class RankingsService {
       throw new NotFoundException('Doctor profile not found');
     }
 
+    return this.findByDoctorId(profile.id, query);
+  }
+
+  /** Ommaviy profil shifokorning umumiy reytingdagi o'rnini ko'rsatadi. */
+  async findByDoctorId(
+    doctorId: number,
+    query: RankingsQueryDto,
+  ): Promise<MyRanking> {
     const ranked = await this.buildRanking(query);
-    const index = ranked.findIndex((row) => row.doctorId === profile.id);
+    const index = ranked.findIndex((row) => row.doctorId === doctorId);
 
     return {
       position: index === -1 ? null : index + 1,

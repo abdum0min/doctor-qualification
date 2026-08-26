@@ -15,6 +15,7 @@ import {
 import { AttemptPage } from '@/pages/attempt-page'
 import { CertificatesPage } from '@/pages/certificates-page'
 import { DashboardPage } from '@/pages/dashboard-page'
+import { DoctorProfilePage } from '@/pages/doctor-profile-page'
 import { LandingPage } from '@/pages/landing'
 import { ExamsPage } from '@/pages/exams-page'
 import { LoginPage } from '@/pages/login-page'
@@ -63,6 +64,8 @@ export function AppRouter() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
+          <Route path={ROUTES.doctorProfile} element={<DoctorProfilePage />} />
+
           <Route element={<DoctorRoute />}>
             <Route path={ROUTES.dashboard} element={<DashboardPage />} />
             <Route path={ROUTES.exams} element={<ExamsPage />} />

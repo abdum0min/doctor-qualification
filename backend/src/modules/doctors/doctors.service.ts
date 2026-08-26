@@ -6,8 +6,11 @@ import {
   QualificationLevel,
 } from 'src/generated/prisma/enums';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
+import { RankingPeriod } from 'src/modules/rankings/dto/rankings-query.dto';
+import { RankingsService } from 'src/modules/rankings/rankings.service';
 import { SpecialtiesService } from 'src/modules/specialties/specialties.service';
 
+import { DoctorPublicProfileDto } from './dto/doctor-public-profile.dto';
 import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto';
 
 export interface DoctorSpecialtyView {
@@ -92,7 +95,92 @@ export class DoctorsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly specialtiesService: SpecialtiesService,
+    private readonly rankings: RankingsService,
   ) {}
+
+  /**
+   * Reyting va qidiruvdan ochiladigan ommaviy profil. Email va telefon
+   * qaytarilmaydi — bu ma'lumotlar faqat egasiga va administratorga ko'rinadi.
+   */
+  async findPublicProfile(
+    doctorProfileId: number,
+  ): Promise<DoctorPublicProfileDto> {
+    const profile = await this.prisma.doctorProfile.findFirst({
+      where: { id: doctorProfileId, user: { isActive: true } },
+      select: {
+        id: true,
+        workplace: true,
+        experienceYears: true,
+        createdAt: true,
+        user: { select: { fullname: true } },
+        specialty: { select: { id: true, name: true } },
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundException('Doctor not found');
+    }
+
+    const [attempts, certificates, ranking] = await Promise.all([
+      this.prisma.examAttempt.findMany({
+        where: {
+          doctorProfileId,
+          status: AttemptStatus.SUBMITTED,
+          score: { not: null },
+        },
+        select: { score: true, passed: true, qualification: true },
+        orderBy: { completedAt: 'desc' },
+      }),
+
+      this.prisma.certificate.findMany({
+        where: { doctorProfileId, status: CertificateStatus.ACTIVE },
+        select: {
+          certificateId: true,
+          examTitle: true,
+          qualification: true,
+          score: true,
+          status: true,
+          issuedAt: true,
+          expiresAt: true,
+        },
+        orderBy: { issuedAt: 'desc' },
+      }),
+
+      this.rankings.findByDoctorId(doctorProfileId, {
+        page: 1,
+        limit: 1,
+        period: RankingPeriod.AllTime,
+      }),
+    ]);
+
+    const scores = attempts
+      .map((attempt) => attempt.score)
+      .filter((score): score is number => score !== null);
+
+    return {
+      id: profile.id,
+      fullname: profile.user.fullname,
+      specialty: profile.specialty,
+      workplace: profile.workplace,
+      experienceYears: profile.experienceYears,
+      joinedAt: profile.createdAt,
+      completedAttempts: attempts.length,
+      passedAttempts: attempts.filter((attempt) => attempt.passed).length,
+      averageScore: scores.length
+        ? Math.round(
+            scores.reduce((sum, score) => sum + score, 0) / scores.length,
+          )
+        : null,
+      bestScore: scores.length ? Math.max(...scores) : null,
+      currentQualification: attempts[0]?.qualification ?? null,
+      ranking: {
+        position: ranking.position,
+        totalDoctors: ranking.totalDoctors,
+        score: ranking.row?.score ?? null,
+      },
+      certificates,
+    };
+  }
 
   async findOwnProfile(userId: number): Promise<DoctorProfileView> {
     const profile = await this.prisma.doctorProfile.findUnique({

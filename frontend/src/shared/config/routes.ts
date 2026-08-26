@@ -13,6 +13,7 @@ export const ROUTES = {
   attempt: '/attempts/:attemptId',
   results: '/results',
   ranking: '/ranking',
+  doctorProfile: '/doctors/:doctorId',
   certificates: '/certificates',
   notifications: '/notifications',
   profile: '/profile',
@@ -43,4 +44,5 @@ export const buildRoute = {
   attempt: (attemptId: number) => `/attempts/${attemptId}`,
   verify: (certificateId: string) => `/verify/${certificateId}`,
   examQuestions: (examId: number) => `/admin/exams/${examId}/questions`,
+  doctor: (doctorId: number) => `/doctors/${doctorId}`,
 } as const

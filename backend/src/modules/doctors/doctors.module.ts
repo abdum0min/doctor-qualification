@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { RankingsModule } from 'src/modules/rankings/rankings.module';
 import { SpecialtiesModule } from 'src/modules/specialties/specialties.module';
 
 import { AdminDoctorsController } from './admin-doctors.controller';
@@ -8,7 +9,7 @@ import { DoctorsController } from './doctors.controller';
 import { DoctorsService } from './doctors.service';
 
 @Module({
-  imports: [SpecialtiesModule],
+  imports: [SpecialtiesModule, RankingsModule],
   controllers: [DoctorsController, AdminDoctorsController],
   providers: [DoctorsService, AdminDoctorsService],
   exports: [DoctorsService],

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Trophy } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 import { QualificationBadge } from '@/features/attempts'
 import { useIsAdmin } from '@/features/auth'
@@ -14,6 +15,7 @@ import {
 } from '@/features/rankings'
 import { SpecialtySelect } from '@/features/specialties'
 import type { ApiError } from '@/shared/api'
+import { buildRoute } from '@/shared/config'
 import { useTableQuery } from '@/shared/hooks'
 import { cn } from '@/shared/lib/utils'
 import { AsyncState } from '@/shared/ui/async-state'
@@ -43,7 +45,12 @@ const columns: Column<RankingRow>[] = [
     header: 'Shifokor',
     cell: (row) => (
       <div className="max-w-xs space-y-1">
-        <p className="font-medium">{row.fullname}</p>
+        <Link
+          to={buildRoute.doctor(row.doctorId)}
+          className="font-medium hover:underline"
+        >
+          {row.fullname}
+        </Link>
         <p className="truncate text-xs text-muted-foreground">
           {row.specialtyName ?? DASH}
           {row.workplace ? ` · ${row.workplace}` : ''}

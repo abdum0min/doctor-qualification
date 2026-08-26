@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Patch } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
@@ -13,6 +20,7 @@ import { UserRole } from 'src/generated/prisma/enums';
 import { DoctorsService } from './doctors.service';
 import { DoctorOverviewDto } from './dto/doctor-overview.dto';
 import { DoctorProfileDto } from './dto/doctor-profile.dto';
+import { DoctorPublicProfileDto } from './dto/doctor-public-profile.dto';
 import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto';
 
 @ApiTags('Doctors')
@@ -40,6 +48,22 @@ export class DoctorsController {
   @ApiErrorResponses(401, 403, 404)
   findOwnOverview(@CurrentUser('id') userId: number) {
     return this.doctorsService.findOwnOverview(userId);
+  }
+
+  // Sinf darajasidagi @Roles method darajasida qayta belgilanadi —
+  // ommaviy profilni administrator ham ochadi.
+  @Roles(UserRole.DOCTOR, UserRole.ADMIN)
+  @Get(':doctorId')
+  @ResponseMessage('Doctor profile')
+  @ApiOperation({
+    summary: 'Shifokorning ommaviy profili',
+    description:
+      'Reyting va qidiruvdan ochiladi. Email va telefon qaytarilmaydi.',
+  })
+  @ApiDataResponse(DoctorPublicProfileDto)
+  @ApiErrorResponses(401, 403, 404)
+  findPublicProfile(@Param('doctorId', ParseIntPipe) doctorId: number) {
+    return this.doctorsService.findPublicProfile(doctorId);
   }
 
   @Patch('me')
