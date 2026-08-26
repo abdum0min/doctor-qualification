@@ -109,6 +109,15 @@ Quyidagi hisoblar tayyor turadi (faqat lokal ishlash uchun):
 
 ---
 
+## Hujjatlar
+
+| Fayl | Nima haqida |
+| --- | --- |
+| [docs/qilingan-ishlar.md](docs/qilingan-ishlar.md) | Bosqichma-bosqich bajarilgan ishlar |
+| [docs/uztoz-rating-farqlari.md](docs/uztoz-rating-farqlari.md) | `uztoz-rating` bilan farqlar |
+
+---
+
 ## Environment
 
 | O'zgaruvchi | Tavsif |

@@ -1,7 +1,7 @@
-# Qilingan ishlar va uztoz-rating bilan farqlar
+# Qilingan ishlar
 
-Ushbu hujjat ikki savolga javob beradi: qanday ishlar bajarildi va bu platforma
-`uztoz-rating` (ustoz reytingi) loyihasidan nimasi bilan farq qiladi.
+Ushbu hujjat bajarilgan ishlarni bosqichma-bosqich yozib boradi. `uztoz-rating`
+bilan farqlar alohida hujjatda: [uztoz-rating-farqlari.md](./uztoz-rating-farqlari.md).
 
 ---
 
@@ -213,56 +213,23 @@ Commit: `feat: add avatar uploads`.
 
 ---
 
-## 3. `doctor-qualification` va `uztoz-rating` farqlari
+## 3. Uchinchi bosqich — boshqaruv panellari
 
-Ikkala loyiha ham "foydalanuvchi test topshiradi → ball oladi → reytingga tushadi →
-sertifikat oladi" oqimini quradi, lekin domeni va bir nechta qarorlari boshqacha.
+- Ikkala panel ham `uztoz-rating` maketiga keltirildi: 6 ta ko'rsatkich kartasi,
+  asosiy ustun + 340px yon ustun.
+- Shifokor paneli: natijalar dinamikasi grafigi, so'nggi imtihonlar,
+  mavjud imtihon kartalari, TOP ro'yxat, e'lonlar va sertifikat chaqirig'i.
+- Admin paneli: kunlik faollik (30 kun), o'rtacha ball dinamikasi (12 oy),
+  shifokorlar o'sishi va natijalar taqsimoti grafiklari.
+- Backend: `GET /statistics/trends` va shifokor xulosasiga `scoreTrend`,
+  `recentAttempts`, `recentChange` qo'shildi. Davr kalitlari mahalliy vaqt
+  bo'yicha quriladi — `toISOString()` UTC ga o'tkazib, oxirgi kunni kechagi
+  katakka tushirib yuborardi.
+- Adminda bildirishnoma qo'ng'irog'i olib tashlandi — bu yerda xabarlar faqat
+  shifokorlarga yoziladi, adminda u doim bo'sh turardi.
+- Sozlamalar 30 soniyaga keshlandi (`upsert` har o'qishda yozuv qilardi) —
+  `/rankings/top` 5s dan 1.3s ga tushdi.
 
-### 3.1. Domen farqi
-
-| | `uztoz-rating` | `doctor-qualification` |
-| --- | --- | --- |
-| Foydalanuvchi | O'qituvchi (teacher) | Shifokor (doctor) |
-| Bo'lim | Fan (subject) | Mutaxassislik (specialty) |
-| Test | `Test` | `Exam` |
-| Natija ma'nosi | Reyting o'rni | **Malaka darajasi** (5 pog'ona) |
-
-Eng katta konseptual farq: `uztoz-rating` da natija asosan **reyting** uchun, bu yerda
-esa natija **malaka darajasini** belgilaydi va sertifikat shu darajani tasdiqlaydi.
-Shuning uchun bu loyihada `domain/qualification.ts` markaziy o'rin egallaydi.
-
-### 3.2. Bu loyihada ataylab boshqacha qilingan narsalar
-
-- **Sertifikat raqami** — `req.txt` talabi bo'yicha ketma-ket format
-  `DOC-YYYY-NNNNNN`, Postgres ketma-ketligidan (`certificate_number_seq`).
-  `uztoz-rating` da boshqa sxema ishlatilgan; biz mijoz so'ragan formatni saqladik.
-- **PDF backendda** — `pdfkit` + `qrcode`, headless brauzersiz. Deploy yengil bo'ladi.
-- **Snapshot tarixi** — `AttemptQuestion` / `AttemptOption`. Savol keyin tahrirlansa
-  yoki o'chirilsa ham eski natija va uning tahlili o'zgarmaydi. Bu sertifikat beruvchi
-  tizim uchun majburiy: sertifikat orqasidagi dalil o'zgarmasligi kerak.
-- **Prisma global `omit`** — `user.password`, `questionOption.isCorrect`,
-  `attemptOption.isCorrect` ORM darajasida yopilgan. E'tibordan chetda qolgan `include`
-  ham to'g'ri javobni tashqariga chiqara olmaydi.
-- **Ochiq sertifikat tekshiruvi** — Certificate ID yoki QR kod orqali, tizimga
-  kirmasdan. Sertifikat muddati va bekor qilish (`revoke`) ham bor.
-- **Ochiq landing sahifasi** va ochiq statistika.
-
-### 3.3. `uztoz-rating` bilan modul solishtiruvi
-
-| Imkoniyat | Holati |
-| --- | --- |
-| Bildirishnomalar / e'lonlar | ✅ qo'shildi (2.1) |
-| Global qidiruv | ✅ qo'shildi (2.2) |
-| Savollarni CSV/Excel import | ✅ qo'shildi (2.3) |
-| Platforma sozlamalari | ✅ qo'shildi (2.4) |
-| Ommaviy profil sahifasi | ✅ qo'shildi (2.5) |
-| Fayl yuklash | ✅ qo'shildi (2.6) — hozircha faqat avatar |
-| Hududlar ierarxiyasi | ❌ qo'shilmagan — `uztoz-rating` da viloyat → tuman → maktab zanjiri o'qituvchi profilining asosiy qismi. Tibbiyotda unga mos keladigan talab `req.txt` da yo'q, shuning uchun ataylab olinmadi. Kerak bo'lsa `DoctorProfile.workplace` matn maydonini muassasa jadvaliga almashtirish kifoya. |
-
-### 3.4. Umumiy bo'lgan yondashuvlar
-
-Ikkala loyihada ham: rol asosidagi `admin/*` marshrutlari, test ichidagi savol
-boshqaruvi (`admin/tests/:testId/questions` ↔ `admin/exams/:examId/questions`),
-reyting moduli, sertifikat moduli, bildirishnomalar, global qidiruv, savol importi,
-platforma sozlamalari va alohida "Natijalar" sahifasi. Ikkinchi bosqichdagi ishlar
-aynan shu tuzilishga yaqinlashtirish edi — chunki u amalda o'zini oqlagan.
+Commitlar: `fix: hide the notification bell from admins`,
+`perf: cache platform settings and ranking results`,
+`feat: rebuild the doctor and admin dashboards`.
