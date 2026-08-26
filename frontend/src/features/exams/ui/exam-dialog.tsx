@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 
+import { useExamDefaults } from '@/features/settings'
 import { SpecialtySelect } from '@/features/specialties'
 import { Button } from '@/shared/ui/button'
 import {
@@ -67,11 +68,25 @@ export function ExamDialog({ exam, children }: ExamDialogProps) {
     defaultValues: EMPTY_VALUES,
   })
 
+  // Yangi imtihon formasi administrator sozlagan standartlar bilan ochiladi.
+  const { data: defaults } = useExamDefaults(open && !exam)
+
   useEffect(() => {
     if (!open) return
 
-    reset(exam ? toFormValues(exam) : EMPTY_VALUES)
-  }, [open, exam, reset])
+    reset(
+      exam
+        ? toFormValues(exam)
+        : defaults
+          ? {
+              ...EMPTY_VALUES,
+              questionCount: String(defaults.questionCount),
+              timeLimitMinutes: String(defaults.timeLimitMinutes),
+              passingScore: String(defaults.passingScore),
+            }
+          : EMPTY_VALUES,
+    )
+  }, [open, exam, defaults, reset])
 
   const onSubmit = handleSubmit(async (values) => {
     const payload = toExamPayload(values)

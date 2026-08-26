@@ -7,7 +7,15 @@ const HEADER = ['Savol', 'A', 'B', 'C', 'D', "To'g'ri javob", 'Daraja'];
 const TEXT = 'Miokard infarktining asosiy belgisi qaysi?';
 
 function row(text = TEXT, correct = 'B', difficulty = "O'rta"): string[] {
-  return [text, 'Bosh og`riq', 'Ko`krak og`rig`i', 'Yo`tal', 'Isitma', correct, difficulty];
+  return [
+    text,
+    'Bosh og`riq',
+    'Ko`krak og`rig`i',
+    'Yo`tal',
+    'Isitma',
+    correct,
+    difficulty,
+  ];
 }
 
 describe('mapColumns', () => {
@@ -63,7 +71,10 @@ describe('parseRows', () => {
   });
 
   it('reports an invalid correct answer with the file row number', () => {
-    const { questions, errors } = parseRows(HEADER, [row(), row(TEXT + '?', 'Z')]);
+    const { questions, errors } = parseRows(HEADER, [
+      row(),
+      row(TEXT + '?', 'Z'),
+    ]);
 
     expect(questions).toHaveLength(1);
     expect(errors).toHaveLength(1);

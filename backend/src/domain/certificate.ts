@@ -18,9 +18,12 @@ export function buildCertificateId(
   ].join('-');
 }
 
-export function certificateExpiryDate(issuedAt: Date): Date {
+export function certificateExpiryDate(
+  issuedAt: Date,
+  validityMonths: number = CERTIFICATE_VALIDITY_MONTHS,
+): Date {
   const expiresAt = new Date(issuedAt);
-  expiresAt.setUTCMonth(expiresAt.getUTCMonth() + CERTIFICATE_VALIDITY_MONTHS);
+  expiresAt.setUTCMonth(expiresAt.getUTCMonth() + validityMonths);
 
   return expiresAt;
 }

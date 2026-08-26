@@ -27,6 +27,7 @@ export const ROUTES = {
   adminAttempts: '/admin/attempts',
   adminCertificates: '/admin/certificates',
   adminAnnouncements: '/admin/announcements',
+  adminSettings: '/admin/settings',
   designSystem: '/design-system',
 } as const
 

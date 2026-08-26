@@ -9,6 +9,7 @@ import {
   AdminDoctorsPage,
   AdminExamQuestionsPage,
   AdminExamsPage,
+  AdminSettingsPage,
   AdminSpecialtiesPage,
 } from '@/pages/admin'
 import { AttemptPage } from '@/pages/attempt-page'
@@ -90,6 +91,7 @@ export function AppRouter() {
               path={ROUTES.adminAnnouncements}
               element={<AdminAnnouncementsPage />}
             />
+            <Route path={ROUTES.adminSettings} element={<AdminSettingsPage />} />
             <Route path={ROUTES.adminRankings} element={<RankingPage />} />
             <Route
               path={ROUTES.adminCertificates}

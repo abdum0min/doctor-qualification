@@ -10,6 +10,7 @@ import {
 import { Prisma } from 'src/generated/prisma/client';
 import { AttemptStatus, QualificationLevel } from 'src/generated/prisma/enums';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
+import { SettingsService } from 'src/modules/settings/settings.service';
 
 import { RankingPeriod, RankingsQueryDto } from './dto/rankings-query.dto';
 
@@ -43,7 +44,10 @@ const PERIOD_MONTHS: Record<RankingPeriod, number | null> = {
 
 @Injectable()
 export class RankingsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly settings: SettingsService,
+  ) {}
 
   async findMany(query: RankingsQueryDto): Promise<Paginated<RankingRow>> {
     const ranked = await this.buildRanking(query);
@@ -104,6 +108,9 @@ export class RankingsService {
       return [];
     }
 
+    // Vaznlar administrator sozlamalaridan olinadi.
+    const config = await this.settings.rankingConfig();
+
     const grouped = new Map<number, typeof attempts>();
     for (const attempt of attempts) {
       const bucket = grouped.get(attempt.doctorProfileId) ?? [];
@@ -149,13 +156,13 @@ export class RankingsService {
         // Eng so'nggi urinish birinchi bo'lib keladi (`orderBy` yuqorida).
         qualification: own[0]?.qualification ?? null,
         certificatesCount: profile._count.certificates,
-        score: calculateRankingScore(metrics),
+        score: calculateRankingScore(metrics, config),
         lastAttemptAt: own[0]?.completedAt ?? null,
       };
     });
 
     return rows
-      .sort(compareRanked)
+      .sort((first, second) => compareRanked(first, second, config))
       .map((row, index) => ({ ...row, position: index + 1 }));
   }
 }

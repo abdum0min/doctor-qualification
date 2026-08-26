@@ -6,7 +6,15 @@
  * 100% ga topshirgan shifokor o'nta imtihonni 95% ga topshirgandan yuqori
  * turib qolardi. Shuning uchun urinishlar hajmi ham ulush oladi.
  */
-export const RANKING_WEIGHTS = {
+export interface RankingWeights {
+  averageScore: number;
+  bestScore: number;
+  volume: number;
+  passRate: number;
+}
+
+/** Sozlamalar o'zgartirilmagan holatdagi qiymatlar. */
+export const RANKING_WEIGHTS: RankingWeights = {
   averageScore: 0.5,
   bestScore: 0.2,
   volume: 0.2,
@@ -23,22 +31,44 @@ export interface RankingMetrics {
   bestScore: number;
 }
 
-export function calculateRankingScore(metrics: RankingMetrics): number {
+export interface RankingConfig {
+  weights: RankingWeights;
+  volumeTargetAttempts: number;
+}
+
+export const DEFAULT_RANKING_CONFIG: RankingConfig = {
+  weights: RANKING_WEIGHTS,
+  volumeTargetAttempts: VOLUME_TARGET_ATTEMPTS,
+};
+
+export function calculateRankingScore(
+  metrics: RankingMetrics,
+  config: RankingConfig = DEFAULT_RANKING_CONFIG,
+): number {
   if (metrics.attemptCount === 0) {
     return 0;
   }
 
-  const volume =
-    Math.min(metrics.attemptCount / VOLUME_TARGET_ATTEMPTS, 1) * 100;
+  const { weights } = config;
+  const target = Math.max(config.volumeTargetAttempts, 1);
+
+  const volume = Math.min(metrics.attemptCount / target, 1) * 100;
   const passRate = (metrics.passedCount / metrics.attemptCount) * 100;
 
   const weighted =
-    metrics.averageScore * RANKING_WEIGHTS.averageScore +
-    metrics.bestScore * RANKING_WEIGHTS.bestScore +
-    volume * RANKING_WEIGHTS.volume +
-    passRate * RANKING_WEIGHTS.passRate;
+    metrics.averageScore * weights.averageScore +
+    metrics.bestScore * weights.bestScore +
+    volume * weights.volume +
+    passRate * weights.passRate;
 
-  return Math.round(weighted * 10) / 10;
+  const totalWeight =
+    weights.averageScore +
+    weights.bestScore +
+    weights.volume +
+    weights.passRate;
+
+  // Vaznlar yig'indisi 1 dan farq qilsa ham ball 0..100 shkalasida qoladi.
+  return Math.round((weighted / totalWeight) * 10) / 10;
 }
 
 /**
@@ -48,9 +78,11 @@ export function calculateRankingScore(metrics: RankingMetrics): number {
 export function compareRanked<T extends RankingMetrics & { doctorId: number }>(
   first: T,
   second: T,
+  config: RankingConfig = DEFAULT_RANKING_CONFIG,
 ): number {
   return (
-    calculateRankingScore(second) - calculateRankingScore(first) ||
+    calculateRankingScore(second, config) -
+      calculateRankingScore(first, config) ||
     second.averageScore - first.averageScore ||
     second.bestScore - first.bestScore ||
     second.attemptCount - first.attemptCount ||

@@ -310,3 +310,29 @@ model Announcement {
 
   @@index([createdAt])
 }
+
+/// Administrator o'zgartira oladigan platforma sozlamalari — yagona qatorda
+/// saqlanadi. Malaka darajasi chegaralari va sertifikat raqami formati bu
+/// yerga kiritilmagan: ular berilgan hujjatlarga yozilgan va o'zgarmasligi kerak.
+model PlatformSettings {
+  id Int @id @default(1)
+
+  /// Reyting bali vaznlari — yig'indisi 1 ga teng bo'lishi shart emas,
+  /// muhimi kamida bittasi noldan katta bo'lsin.
+  averageScoreWeight   Float @default(0.5)
+  bestScoreWeight      Float @default(0.2)
+  volumeWeight         Float @default(0.2)
+  passRateWeight       Float @default(0.1)
+  volumeTargetAttempts Int   @default(5)
+
+  /// Yangi beriladigan sertifikatlar uchun amal qilish muddati (oy).
+  /// Allaqachon berilgan sertifikatlarning muddati o'zgarmaydi.
+  certificateValidityMonths Int @default(12)
+
+  /// Yangi imtihon formasi shu qiymatlar bilan to'ldiriladi.
+  defaultQuestionCount    Int @default(10)
+  defaultTimeLimitMinutes Int @default(20)
+  defaultPassingScore     Int @default(60)
+
+  updatedAt DateTime @updatedAt
+}

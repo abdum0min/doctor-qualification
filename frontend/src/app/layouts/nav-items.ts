@@ -2,6 +2,7 @@ import {
   Bell,
   LayoutDashboard,
   Megaphone,
+  Settings,
   ClipboardList,
   Award,
   BarChart3,
@@ -42,6 +43,7 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: ROUTES.adminRankings, label: 'Reyting', icon: Trophy },
   { to: ROUTES.adminCertificates, label: 'Sertifikatlar', icon: Award },
   { to: ROUTES.adminAnnouncements, label: "E'lonlar", icon: Megaphone },
+  { to: ROUTES.adminSettings, label: 'Sozlamalar', icon: Settings },
 ]
 
 export function navItemsForRole(role: UserRole | undefined): NavItem[] {

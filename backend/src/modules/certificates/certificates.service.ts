@@ -21,6 +21,7 @@ import {
 } from 'src/generated/prisma/enums';
 import { NotificationsService } from 'src/modules/notifications/notifications.service';
 import { PrismaService } from 'src/modules/prisma/prisma.service';
+import { SettingsService } from 'src/modules/settings/settings.service';
 
 import { AdminCertificateQueryDto } from './dto/admin-certificate-query.dto';
 import { CertificateQueryDto } from './dto/certificate-query.dto';
@@ -87,6 +88,7 @@ export class CertificatesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly settings: SettingsService,
   ) {}
 
   /**
@@ -124,6 +126,9 @@ export class CertificatesService {
 
     const issuedAt = new Date();
     const certificateId = buildCertificateId(await nextSequence(tx), issuedAt);
+    // Muddat berilgan paytdagi sozlamadan olinadi va hujjatga yoziladi —
+    // sozlama keyin o'zgarsa ham berilgan sertifikat o'zgarmaydi.
+    const validityMonths = await this.settings.certificateValidityMonths();
 
     await tx.certificate.create({
       data: {
@@ -136,7 +141,7 @@ export class CertificatesService {
         score: attempt.score,
         qualification: attempt.qualification,
         issuedAt,
-        expiresAt: certificateExpiryDate(issuedAt),
+        expiresAt: certificateExpiryDate(issuedAt, validityMonths),
       },
     });
 
