@@ -4,12 +4,12 @@ import { toast } from 'sonner'
 import type { ApiError } from '@/shared/api'
 import { queryClient } from '@/shared/lib/query-client'
 import type { ExamPayload } from '../model/schemas'
-import { examsApi } from './exams-api'
+import { examsApi, type ExamListParams } from './exams-api'
 
 export const examKeys = {
   all: ['exams'] as const,
   active: (specialtyId?: number) => [...examKeys.all, 'active', specialtyId ?? 0] as const,
-  admin: (specialtyId?: number) => [...examKeys.all, 'admin', specialtyId ?? 0] as const,
+  admin: (params: ExamListParams) => [...examKeys.all, 'admin', params] as const,
   detail: (id: number) => [...examKeys.all, 'detail', id] as const,
   adminDetail: (id: number) => [...examKeys.all, 'admin', 'detail', id] as const,
 }
@@ -21,10 +21,10 @@ export function useActiveExams(specialtyId?: number) {
   })
 }
 
-export function useAdminExams(specialtyId?: number) {
+export function useAdminExams(params: ExamListParams = {}) {
   return useQuery({
-    queryKey: examKeys.admin(specialtyId),
-    queryFn: () => examsApi.all(specialtyId ? { specialtyId } : undefined),
+    queryKey: examKeys.admin(params),
+    queryFn: () => examsApi.all(params),
   })
 }
 

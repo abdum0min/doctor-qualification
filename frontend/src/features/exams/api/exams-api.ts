@@ -2,9 +2,10 @@ import { ENDPOINTS, http } from '@/shared/api'
 import type { ExamPayload } from '../model/schemas'
 import type { AdminExam, Exam, ExamStatus } from '../model/types'
 
-interface ExamListParams {
+export interface ExamListParams {
   specialtyId?: number
   status?: ExamStatus
+  search?: string
 }
 
 export const examsApi = {

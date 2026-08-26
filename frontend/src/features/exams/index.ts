@@ -7,6 +7,7 @@ export {
   useExam,
   useUpdateExam,
 } from './api/exams-queries'
+export type { ExamListParams } from './api/exams-api'
 export { examSchema, toExamPayload } from './model/schemas'
 export type { ExamPayload, ExamValues } from './model/schemas'
 export { EXAM_LIMITS, type AdminExam, type Exam, type ExamStatus } from './model/types'

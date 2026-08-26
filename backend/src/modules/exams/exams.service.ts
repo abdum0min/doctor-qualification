@@ -59,6 +59,7 @@ export class ExamsService {
         isActive: true,
         specialty: { isActive: true },
         ...(query.specialtyId ? { specialtyId: query.specialtyId } : {}),
+        ...searchFilter(query.search),
       },
       select: examSelect,
       orderBy: [{ specialtyId: 'asc' }, { title: 'asc' }],
@@ -72,6 +73,7 @@ export class ExamsService {
         ...(query.status
           ? { isActive: query.status === ExamStatus.Active }
           : {}),
+        ...searchFilter(query.search),
       },
       select: {
         ...examSelect,
@@ -187,4 +189,9 @@ export class ExamsService {
       );
     }
   }
+}
+
+/** Nom bo'yicha registrga sezgir bo'lmagan qidiruv. */
+function searchFilter(search: string | undefined): Prisma.ExamWhereInput {
+  return search ? { title: { contains: search, mode: 'insensitive' } } : {};
 }

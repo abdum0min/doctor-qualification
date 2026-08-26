@@ -1,6 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsPositive } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsPositive,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export enum ExamStatus {
   Active = 'active',
@@ -22,4 +29,13 @@ export class ExamQueryDto {
   @IsOptional()
   @IsEnum(ExamStatus)
   status?: ExamStatus;
+
+  @ApiPropertyOptional({ description: 'Imtihon nomi bo`yicha qidirish' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(160)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' && value.trim() ? value.trim() : undefined,
+  )
+  search?: string;
 }

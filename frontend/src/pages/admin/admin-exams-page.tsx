@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { FileQuestion, Pencil, Plus, TriangleAlert } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -6,6 +6,7 @@ import { ExamDialog, useAdminExams, type AdminExam } from '@/features/exams'
 import { SpecialtySelect } from '@/features/specialties'
 import type { ApiError } from '@/shared/api'
 import { buildRoute } from '@/shared/config'
+import { useDebounce } from '@/shared/hooks'
 import { AsyncState } from '@/shared/ui/async-state'
 import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
@@ -98,12 +99,26 @@ const columns: Column<AdminExam>[] = [
 
 export function AdminExamsPage() {
   const [specialtyId, setSpecialtyId] = useState<number | null>(null)
-  const { data, isLoading, isError, error } = useAdminExams(specialtyId ?? undefined)
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 400)
+
+  const params = useMemo(
+    () => ({
+      ...(specialtyId ? { specialtyId } : {}),
+      ...(debouncedSearch ? { search: debouncedSearch } : {}),
+    }),
+    [specialtyId, debouncedSearch],
+  )
+
+  const { data, isLoading, isError, error } = useAdminExams(params)
 
   return (
     <PageShell
       title="Imtihonlar"
       description="Har bir imtihon savollar soni, vaqt chegarasi va o'tish balini belgilaydi"
+      search={search}
+      onSearchChange={setSearch}
+      searchPlaceholder="Imtihon nomi bo'yicha qidirish..."
       filters={
         <div className="w-56">
           <SpecialtySelect
@@ -111,7 +126,7 @@ export function AdminExamsPage() {
             value={specialtyId}
             onChange={setSpecialtyId}
             placeholder="Barcha mutaxassisliklar"
-              clearLabel="Barcha mutaxassisliklar"
+            clearLabel="Barcha mutaxassisliklar"
           />
         </div>
       }
@@ -130,7 +145,11 @@ export function AdminExamsPage() {
         errorMessage={(error as ApiError | null)?.message}
         isEmpty={data?.length === 0}
         emptyTitle="Imtihon topilmadi"
-        emptyDescription="Tanlangan mutaxassislik uchun imtihon sozlamasi yaratilmagan."
+        emptyDescription={
+          debouncedSearch
+            ? `"${debouncedSearch}" bo'yicha imtihon topilmadi.`
+            : 'Tanlangan mutaxassislik uchun imtihon sozlamasi yaratilmagan.'
+        }
         loadingFallback={
           <DataTable data={[]} columns={columns} rowKey={(row) => row.id} isLoading />
         }
