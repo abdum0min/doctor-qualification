@@ -7,6 +7,7 @@ import { PrismaClient } from '../src/generated/prisma/client';
 import { UserRole } from '../src/generated/prisma/enums';
 import { DEMO_EXAMS, type DemoExam } from './seed-data/demo-exams';
 import { demoDoctorLogin, seedDemoAttempts } from './seeders/attempts.seeder';
+import { seedDemoNotifications } from './seeders/notifications.seeder';
 
 const SALT_ROUNDS = 10;
 
@@ -175,12 +176,16 @@ async function main(): Promise<void> {
   const created = await seedExams();
   await seedAccounts();
   const demo = await seedDemoAttempts(prisma);
+  const messages = await seedDemoNotifications(prisma);
 
   console.log('✅ Seed tugadi');
   console.log(`   Yangi imtihonlar: ${created.exams}`);
   console.log(`   Yangi demo savollar: ${created.questions}`);
   console.log(
     `   Demo shifokorlar: ${demo.doctors} | urinishlar: ${demo.attempts} | sertifikatlar: ${demo.certificates}`,
+  );
+  console.log(
+    `   Demo xabarlar: ${messages.notifications} | e'lonlar: ${messages.announcements}`,
   );
   for (const account of ACCOUNTS) {
     console.log(
