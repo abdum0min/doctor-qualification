@@ -37,6 +37,11 @@ export interface DoctorCertificateSummary {
   expiresAt: string
 }
 
+export interface DoctorScorePoint {
+  date: string
+  score: number
+}
+
 export interface DoctorStats {
   totalAttempts: number
   completedAttempts: number
@@ -47,6 +52,12 @@ export interface DoctorStats {
   latestAttempt: DoctorLatestAttempt | null
   certificatesCount: number
   latestCertificate: DoctorCertificateSummary | null
+  /** So'nggi urinishlar — eng yangisi birinchi. */
+  recentAttempts: DoctorLatestAttempt[]
+  /** Grafik uchun: eskisidan yangisiga qarab tartiblangan natijalar. */
+  scoreTrend: DoctorScorePoint[]
+  /** So'nggi uchta natijaning umumiy o'rtachadan farqi. */
+  recentChange: number | null
 }
 
 export interface DoctorOverview {

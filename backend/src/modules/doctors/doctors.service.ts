@@ -49,6 +49,12 @@ export interface DoctorCertificateView {
   expiresAt: Date;
 }
 
+/** Boshqaruv panelidagi natija dinamikasi uchun bitta nuqta. */
+export interface DoctorScorePoint {
+  date: Date;
+  score: number;
+}
+
 export interface DoctorStatsView {
   totalAttempts: number;
   completedAttempts: number;
@@ -60,12 +66,26 @@ export interface DoctorStatsView {
   latestAttempt: DoctorLatestAttemptView | null;
   certificatesCount: number;
   latestCertificate: DoctorCertificateView | null;
+  /** So'nggi urinishlar — eng yangisi birinchi. */
+  recentAttempts: DoctorLatestAttemptView[];
+  /** Grafik uchun: eskisidan yangisiga qarab tartiblangan natijalar. */
+  scoreTrend: DoctorScorePoint[];
+  /**
+   * So'nggi uchta natijaning umumiy o'rtachadan farqi — shifokor o'sayaptimi
+   * yoki pasayayaptimi, bir qarashda ko'rinishi uchun.
+   */
+  recentChange: number | null;
 }
 
 export interface DoctorOverviewView {
   profile: DoctorProfileView;
   stats: DoctorStatsView;
 }
+
+/** Grafik uchun olinadigan urinishlar soni. */
+const TREND_ATTEMPTS = 12;
+const RECENT_ATTEMPTS = 5;
+const RECENT_CHANGE_ATTEMPTS = 3;
 
 const profileSelect = {
   id: true,
@@ -238,7 +258,7 @@ export class DoctorsService {
       totalAttempts,
       completedAggregate,
       passedAttempts,
-      latest,
+      recent,
       certificatesCount,
       latestCertificate,
     ] = await Promise.all([
@@ -252,9 +272,10 @@ export class DoctorsService {
       this.prisma.examAttempt.count({
         where: { doctorProfileId, passed: true },
       }),
-      this.prisma.examAttempt.findFirst({
+      this.prisma.examAttempt.findMany({
         where: completedWhere,
         orderBy: [{ completedAt: 'desc' }, { id: 'desc' }],
+        take: TREND_ATTEMPTS,
         select: {
           id: true,
           score: true,
@@ -279,31 +300,70 @@ export class DoctorsService {
       }),
     ]);
 
+    const attempts = recent.map(toAttemptView);
+    const [latest] = recent;
+    const averageScore =
+      completedAggregate._avg.score === null
+        ? null
+        : Math.round(completedAggregate._avg.score);
+
     return {
       totalAttempts,
       completedAttempts: completedAggregate._count._all,
       passedAttempts,
       bestScore: completedAggregate._max.score,
-      averageScore:
-        completedAggregate._avg.score === null
-          ? null
-          : Math.round(completedAggregate._avg.score),
+      averageScore,
       currentQualification: latest?.qualification ?? null,
-      latestAttempt: latest
-        ? {
-            id: latest.id,
-            examTitle: latest.exam.title,
-            specialtyName: latest.exam.specialty.name,
-            score: latest.score ?? 0,
-            qualification: latest.qualification ?? QualificationLevel.BEGINNER,
-            passed: latest.passed ?? false,
-            completedAt: latest.completedAt,
-          }
-        : null,
+      latestAttempt: attempts[0] ?? null,
       certificatesCount,
       latestCertificate,
+      recentAttempts: attempts.slice(0, RECENT_ATTEMPTS),
+      scoreTrend: recent
+        .filter(
+          (
+            attempt,
+          ): attempt is typeof attempt & { completedAt: Date; score: number } =>
+            attempt.completedAt !== null && attempt.score !== null,
+        )
+        .map((attempt) => ({ date: attempt.completedAt, score: attempt.score }))
+        .reverse(),
+      recentChange: recentChange(attempts, averageScore),
     };
   }
+}
+
+function toAttemptView(attempt: {
+  id: number;
+  score: number | null;
+  qualification: QualificationLevel | null;
+  passed: boolean | null;
+  completedAt: Date | null;
+  exam: { title: string; specialty: { name: string } };
+}): DoctorLatestAttemptView {
+  return {
+    id: attempt.id,
+    examTitle: attempt.exam.title,
+    specialtyName: attempt.exam.specialty.name,
+    score: attempt.score ?? 0,
+    qualification: attempt.qualification ?? QualificationLevel.BEGINNER,
+    passed: attempt.passed ?? false,
+    completedAt: attempt.completedAt,
+  };
+}
+
+function recentChange(
+  attempts: DoctorLatestAttemptView[],
+  averageScore: number | null,
+): number | null {
+  if (averageScore === null || attempts.length < RECENT_CHANGE_ATTEMPTS) {
+    return null;
+  }
+
+  const window = attempts.slice(0, RECENT_CHANGE_ATTEMPTS);
+  const recentAverage =
+    window.reduce((sum, attempt) => sum + attempt.score, 0) / window.length;
+
+  return Math.round(recentAverage - averageScore);
 }
 
 function specialtyRelation(specialtyId: number | null) {

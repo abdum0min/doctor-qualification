@@ -9,6 +9,10 @@ import { PrismaService } from 'src/modules/prisma/prisma.service';
 
 export interface PlatformOverview {
   totalDoctors: number;
+  specialtiesCount: number;
+  examsCount: number;
+  questionsCount: number;
+  attemptsToday: number;
   activeDoctors: number;
   doctorsWithAttempts: number;
   totalAttempts: number;
@@ -33,6 +37,21 @@ export interface SpecialtyStatistics {
   averageScore: number | null;
 }
 
+/** Grafiklar uchun bitta nuqta: davr yorlig'i va qiymati. */
+export interface TimePoint {
+  period: string;
+  value: number;
+}
+
+export interface PlatformTrends {
+  /** So'nggi 30 kun: kuniga nechta urinish yakunlangan. */
+  attemptsPerDay: TimePoint[];
+  /** So'nggi 12 oy: oylik o'rtacha natija. */
+  averageScoreTrend: TimePoint[];
+  /** So'nggi 12 oy: oyiga nechta shifokor ro'yxatdan o'tgan. */
+  doctorGrowth: TimePoint[];
+}
+
 export interface PublicStatistics {
   totalDoctors: number;
   completedAttempts: number;
@@ -46,6 +65,9 @@ const COMPLETED_STATUSES = [AttemptStatus.SUBMITTED, AttemptStatus.EXPIRED];
 const COMPLETED = { status: { in: COMPLETED_STATUSES } };
 
 const TOP_SPECIALTY_LIMIT = 5;
+
+const TREND_DAYS = 30;
+const TREND_MONTHS = 12;
 
 @Injectable()
 export class StatisticsService {
@@ -61,6 +83,10 @@ export class StatisticsService {
       passedAttempts,
       certificatesIssued,
       revokedCertificates,
+      specialtiesCount,
+      examsCount,
+      questionsCount,
+      attemptsToday,
     ] = await Promise.all([
       this.prisma.user.count({ where: { role: UserRole.DOCTOR } }),
       this.prisma.user.count({
@@ -79,12 +105,22 @@ export class StatisticsService {
       this.prisma.certificate.count({
         where: { status: CertificateStatus.REVOKED },
       }),
+      this.prisma.specialty.count(),
+      this.prisma.exam.count(),
+      this.prisma.question.count(),
+      this.prisma.examAttempt.count({
+        where: { ...COMPLETED, completedAt: { gte: startOfToday() } },
+      }),
     ]);
 
     const completedAttempts = completedAggregate._count._all;
 
     return {
       totalDoctors,
+      specialtiesCount,
+      examsCount,
+      questionsCount,
+      attemptsToday,
       activeDoctors,
       doctorsWithAttempts,
       totalAttempts,
@@ -195,6 +231,50 @@ export class StatisticsService {
         .slice(0, TOP_SPECIALTY_LIMIT),
     };
   }
+  /**
+   * Grafiklar uchun vaqt qatorlari. Bo'sh kunlar/oylar ham nol qiymat bilan
+   * qaytariladi — aks holda grafikda uzilishlar paydo bo'ladi.
+   */
+  async trends(): Promise<PlatformTrends> {
+    const since30Days = daysAgo(TREND_DAYS - 1);
+    const since12Months = monthsAgo(TREND_MONTHS - 1);
+
+    const [dailyAttempts, monthlyAttempts, registrations] = await Promise.all([
+      this.prisma.examAttempt.findMany({
+        where: { ...COMPLETED, completedAt: { gte: since30Days } },
+        select: { completedAt: true },
+      }),
+      this.prisma.examAttempt.findMany({
+        where: {
+          ...COMPLETED,
+          completedAt: { gte: since12Months },
+          score: { not: null },
+        },
+        select: { completedAt: true, score: true },
+      }),
+      this.prisma.user.findMany({
+        where: { role: UserRole.DOCTOR, createdAt: { gte: since12Months } },
+        select: { createdAt: true },
+      }),
+    ]);
+
+    return {
+      attemptsPerDay: countByPeriod(
+        dailyAttempts.map((attempt) => attempt.completedAt),
+        lastDays(TREND_DAYS),
+        toDayKey,
+      ),
+      averageScoreTrend: averageByPeriod(
+        monthlyAttempts,
+        lastMonths(TREND_MONTHS),
+      ),
+      doctorGrowth: countByPeriod(
+        registrations.map((user) => user.createdAt),
+        lastMonths(TREND_MONTHS),
+        toMonthKey,
+      ),
+    };
+  }
 }
 
 function examsOf<T extends { specialtyId: number }>(
@@ -206,4 +286,106 @@ function examsOf<T extends { specialtyId: number }>(
 
 function roundOrNull(value: number | null): number | null {
   return value === null ? null : Math.round(value);
+}
+
+function startOfToday(): Date {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+
+  return date;
+}
+
+function daysAgo(days: number): Date {
+  const date = startOfToday();
+  date.setDate(date.getDate() - days);
+
+  return date;
+}
+
+function monthsAgo(months: number): Date {
+  const date = startOfToday();
+  date.setDate(1);
+  date.setMonth(date.getMonth() - months);
+
+  return date;
+}
+
+/**
+ * Kalitlar mahalliy vaqt bo'yicha quriladi. `toISOString()` UTC ga o'tkazadi,
+ * shuning uchun UTC+5 da bugungi kun kechagi kalitga tushib qolardi.
+ */
+function toDayKey(date: Date): string {
+  return `${toMonthKey(date)}-${pad(date.getDate())}`;
+}
+
+function toMonthKey(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}`;
+}
+
+function pad(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
+/** Oxirgi `count` kun kalitlari, eng eskisidan boshlab. */
+function lastDays(count: number): string[] {
+  return Array.from({ length: count }, (_, index) =>
+    toDayKey(daysAgo(count - 1 - index)),
+  );
+}
+
+function lastMonths(count: number): string[] {
+  return Array.from({ length: count }, (_, index) =>
+    toMonthKey(monthsAgo(count - 1 - index)),
+  );
+}
+
+function countByPeriod(
+  dates: (Date | null)[],
+  periods: string[],
+  toKey: (date: Date) => string,
+): TimePoint[] {
+  const counts = new Map(periods.map((period) => [period, 0]));
+
+  for (const date of dates) {
+    if (!date) continue;
+
+    const key = toKey(date);
+    const current = counts.get(key);
+
+    if (current !== undefined) {
+      counts.set(key, current + 1);
+    }
+  }
+
+  return periods.map((period) => ({ period, value: counts.get(period) ?? 0 }));
+}
+
+function averageByPeriod(
+  attempts: { completedAt: Date | null; score: number | null }[],
+  periods: string[],
+): TimePoint[] {
+  const totals = new Map(
+    periods.map((period) => [period, { sum: 0, count: 0 }]),
+  );
+
+  for (const attempt of attempts) {
+    if (!attempt.completedAt || attempt.score === null) continue;
+
+    const bucket = totals.get(toMonthKey(attempt.completedAt));
+
+    if (bucket) {
+      bucket.sum += attempt.score;
+      bucket.count += 1;
+    }
+  }
+
+  return periods.map((period) => {
+    const bucket = totals.get(period);
+
+    return {
+      period,
+      value:
+        bucket && bucket.count > 0 ? Math.round(bucket.sum / bucket.count) : 0,
+    };
+  });
 }

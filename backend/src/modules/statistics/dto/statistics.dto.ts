@@ -4,6 +4,18 @@ export class PlatformOverviewDto {
   @ApiProperty({ example: 2458 })
   totalDoctors: number;
 
+  @ApiProperty({ example: 12 })
+  specialtiesCount: number;
+
+  @ApiProperty({ example: 38 })
+  examsCount: number;
+
+  @ApiProperty({ example: 520 })
+  questionsCount: number;
+
+  @ApiProperty({ example: 27, description: 'Bugun yakunlangan urinishlar' })
+  attemptsToday: number;
+
   @ApiProperty({ example: 2401 })
   activeDoctors: number;
 
@@ -87,4 +99,26 @@ export class PublicStatisticsDto {
 
   @ApiProperty({ type: [TopSpecialtyDto] })
   topSpecialties: TopSpecialtyDto[];
+}
+
+export class TimePointDto {
+  @ApiProperty({
+    example: '2026-08',
+    description: 'Kun (YYYY-MM-DD) yoki oy (YYYY-MM)',
+  })
+  period: string;
+
+  @ApiProperty({ example: 42 })
+  value: number;
+}
+
+export class PlatformTrendsDto {
+  @ApiProperty({ type: [TimePointDto], description: "So'nggi 30 kun" })
+  attemptsPerDay: TimePointDto[];
+
+  @ApiProperty({ type: [TimePointDto], description: "So'nggi 12 oy" })
+  averageScoreTrend: TimePointDto[];
+
+  @ApiProperty({ type: [TimePointDto], description: "So'nggi 12 oy" })
+  doctorGrowth: TimePointDto[];
 }

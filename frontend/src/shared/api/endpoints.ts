@@ -69,6 +69,7 @@ export const ENDPOINTS = {
   statistics: {
     overview: '/statistics/overview',
     specialties: '/statistics/specialties',
+    trends: '/statistics/trends',
     public: '/statistics/public',
   },
   admin: {

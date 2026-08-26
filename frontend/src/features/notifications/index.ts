@@ -26,3 +26,4 @@ export {
 } from './model/types'
 export { NotificationBell } from './ui/notification-bell'
 export { NotificationIcon } from './ui/notification-icon'
+export { NotificationItem } from './ui/notification-item'

@@ -1,5 +1,9 @@
 export interface PlatformOverview {
   totalDoctors: number
+  specialtiesCount: number
+  examsCount: number
+  questionsCount: number
+  attemptsToday: number
   activeDoctors: number
   doctorsWithAttempts: number
   totalAttempts: number
@@ -30,4 +34,16 @@ export interface PublicStatistics {
   certificatesIssued: number
   averageScore: number | null
   topSpecialties: { name: string; doctorsCount: number }[]
+}
+
+/** Grafiklar uchun bitta nuqta: davr yorlig'i va qiymati. */
+export interface TimePoint {
+  period: string
+  value: number
+}
+
+export interface PlatformTrends {
+  attemptsPerDay: TimePoint[]
+  averageScoreTrend: TimePoint[]
+  doctorGrowth: TimePoint[]
 }

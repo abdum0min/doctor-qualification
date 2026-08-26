@@ -12,6 +12,7 @@ import { UserRole } from 'src/generated/prisma/enums';
 
 import {
   PlatformOverviewDto,
+  PlatformTrendsDto,
   PublicStatisticsDto,
   SpecialtyStatisticsDto,
 } from './dto/statistics.dto';
@@ -40,6 +41,22 @@ export class StatisticsController {
   @ApiErrorResponses(401, 403)
   overview() {
     return this.statisticsService.overview();
+  }
+
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth('access-token')
+  @Get('trends')
+  @ResponseMessage('Platform trends')
+  @ApiOperation({
+    summary: 'Boshqaruv paneli grafiklari uchun vaqt qatorlari (admin)',
+    description:
+      'Bo`sh kunlar va oylar ham nol qiymat bilan qaytariladi — grafikda ' +
+      'uzilish bo`lmasligi uchun.',
+  })
+  @ApiDataResponse(PlatformTrendsDto)
+  @ApiErrorResponses(401, 403)
+  trends() {
+    return this.statisticsService.trends();
   }
 
   @Roles(UserRole.ADMIN)

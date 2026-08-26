@@ -13,8 +13,10 @@ export type {
   DoctorLatestAttempt,
   DoctorOverview,
   DoctorProfile,
+  DoctorScorePoint,
   DoctorPublicProfile,
   PublicCertificate,
   DoctorStats,
 } from './model/types'
 export { DoctorProfileForm } from './ui/doctor-profile-form'
+export { ScoreTrendChart } from './ui/score-trend-chart'

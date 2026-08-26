@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 import {
   CertificateStatus,
@@ -44,6 +44,14 @@ class DoctorCertificateSummaryDto {
   expiresAt: Date;
 }
 
+class DoctorScorePointDto {
+  @ApiProperty({ example: '2026-08-12T10:00:00.000Z' })
+  date: Date;
+
+  @ApiProperty({ example: 88 })
+  score: number;
+}
+
 class DoctorStatsDto {
   @ApiProperty({ example: 4 })
   totalAttempts: number;
@@ -71,6 +79,25 @@ class DoctorStatsDto {
 
   @ApiProperty({ type: DoctorCertificateSummaryDto, nullable: true })
   latestCertificate: DoctorCertificateSummaryDto | null;
+
+  @ApiProperty({
+    type: [DoctorLatestAttemptDto],
+    description: "So'nggi urinishlar",
+  })
+  recentAttempts: DoctorLatestAttemptDto[];
+
+  @ApiProperty({
+    type: [DoctorScorePointDto],
+    description: 'Natijalar dinamikasi',
+  })
+  scoreTrend: DoctorScorePointDto[];
+
+  @ApiPropertyOptional({
+    nullable: true,
+    example: 4,
+    description: "So'nggi uchta natijaning umumiy o'rtachadan farqi",
+  })
+  recentChange: number | null;
 }
 
 export class DoctorOverviewDto {

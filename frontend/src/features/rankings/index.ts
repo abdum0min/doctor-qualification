@@ -8,3 +8,4 @@ export {
   type RankingRow,
 } from './model/types'
 export { RankBadge } from './ui/rank-badge'
+export { TopDoctors } from './ui/top-doctors'

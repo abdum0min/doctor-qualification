@@ -49,7 +49,10 @@ export function StatCard({
           ) : (
             <p className="text-2xl leading-tight font-semibold tabular-nums">{value}</p>
           )}
-          <p className="truncate text-sm font-medium">{label}</p>
+          {/* Yorliq qirqilmasin — tor ustunlarda ikki qatorga o'tadi. */}
+          <p className="text-sm leading-snug font-medium break-words text-pretty">
+            {label}
+          </p>
           {hint && <p className="truncate text-xs text-muted-foreground">{hint}</p>}
         </div>
       </CardContent>

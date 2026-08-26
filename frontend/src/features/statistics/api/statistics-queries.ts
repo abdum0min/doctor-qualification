@@ -7,6 +7,7 @@ export const statisticsKeys = {
   overview: ['statistics', 'overview'] as const,
   specialties: ['statistics', 'specialties'] as const,
   public: ['statistics', 'public'] as const,
+  trends: ['statistics', 'trends'] as const,
 }
 
 export function usePlatformOverview() {
@@ -27,5 +28,12 @@ export function usePublicStatistics() {
   return useQuery({
     queryKey: statisticsKeys.public,
     queryFn: () => statisticsApi.publicSummary(),
+  })
+}
+
+export function usePlatformTrends() {
+  return useQuery({
+    queryKey: statisticsKeys.trends,
+    queryFn: () => statisticsApi.trends(),
   })
 }

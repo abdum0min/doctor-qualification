@@ -1,233 +1,340 @@
-import { Award, ClipboardCheck, Target, TrendingUp, Trophy } from 'lucide-react'
+import {
+  Award,
+  ClipboardList,
+  GraduationCap,
+  Star,
+  Target,
+  TrendingUp,
+  Trophy,
+} from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-import { AttemptHistoryTable, QualificationBadge } from '@/features/attempts'
+import { QualificationBadge } from '@/features/attempts'
 import { useCurrentUser } from '@/features/auth'
-import { useDoctorOverview, type DoctorLatestAttempt } from '@/features/doctors'
+import {
+  ScoreTrendChart,
+  useDoctorOverview,
+  type DoctorLatestAttempt,
+} from '@/features/doctors'
+import { ExamCard, useActiveExams } from '@/features/exams'
+import { NotificationItem, useNotifications } from '@/features/notifications'
+import { TopDoctors, useMyRanking } from '@/features/rankings'
 import type { ApiError } from '@/shared/api'
-import { buildRoute, ROUTES } from '@/shared/config'
+import { ROUTES } from '@/shared/config'
 import { formatDate } from '@/shared/lib/format'
 import { AsyncState } from '@/shared/ui/async-state'
-import { Badge } from '@/shared/ui/badge'
 import { Button } from '@/shared/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card'
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/shared/ui/empty'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/shared/ui/card'
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/shared/ui/empty'
+import { PageHeader } from '@/shared/ui/page-header'
+import { Skeleton } from '@/shared/ui/skeleton'
 import { StatCard } from '@/shared/ui/stat-card'
 
 const DASH = '—'
+const AVAILABLE_EXAMS = 4
+const NOTIFICATION_PREVIEW = 4
 
 export function DashboardPage() {
   const user = useCurrentUser()
   const { data, isLoading, isError, error } = useDoctorOverview()
 
-  const stats = data?.stats
   const profile = data?.profile
+  const stats = data?.stats
+  const specialtyId = profile?.specialty?.id
+
+  const ranking = useMyRanking()
+  const exams = useActiveExams(specialtyId)
+  const notifications = useNotifications({
+    page: 1,
+    limit: NOTIFICATION_PREVIEW,
+  })
+
+  const passRate =
+    stats && stats.completedAttempts > 0
+      ? Math.round((stats.passedAttempts / stats.completedAttempts) * 100)
+      : null
+
+  const statCards = [
+    {
+      icon: Trophy,
+      tone: 'blue' as const,
+      label: "Reyting o'rnim",
+      value: ranking.data?.position ? `${ranking.data.position}-o'rin` : DASH,
+      hint: ranking.data
+        ? `${ranking.data.totalDoctors} ta shifokordan`
+        : undefined,
+    },
+    {
+      icon: Star,
+      tone: 'amber' as const,
+      label: "O'rtacha ball",
+      value: stats?.averageScore === null ? DASH : `${stats?.averageScore}%`,
+      hint: describeChange(stats?.recentChange),
+    },
+    {
+      icon: TrendingUp,
+      tone: 'emerald' as const,
+      label: 'Eng yuqori ball',
+      value: stats?.bestScore === null ? DASH : `${stats?.bestScore}%`,
+    },
+    {
+      icon: Target,
+      tone: 'violet' as const,
+      label: 'Oxirgi natija',
+      value: stats?.latestAttempt ? `${stats.latestAttempt.score}%` : DASH,
+      hint: stats?.latestAttempt
+        ? formatDate(stats.latestAttempt.completedAt)
+        : 'Hali imtihon topshirilmagan',
+    },
+    {
+      icon: ClipboardList,
+      tone: 'blue' as const,
+      label: 'Imtihonlarim',
+      value: stats?.completedAttempts ?? 0,
+      hint: passRate === null ? undefined : `${passRate}% o'tgan`,
+    },
+    {
+      icon: Award,
+      tone: 'emerald' as const,
+      label: 'Sertifikatlarim',
+      value: stats?.certificatesCount ?? 0,
+      hint: stats?.latestCertificate?.certificateId,
+    },
+  ]
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-1">
-          <h2 className="text-xl font-semibold tracking-tight">
-            Salom, {profile?.fullname ?? user?.fullname ?? 'shifokor'}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {profile?.specialty
-              ? `${profile.specialty.name} yo'nalishi bo'yicha malaka ko'rsatkichlaringiz`
-              : "Imtihon topshirish uchun avval mutaxassislikni tanlang"}
-          </p>
-        </div>
-
-        <Button asChild>
-          <Link to={ROUTES.exams}>Imtihonga kirish</Link>
-        </Button>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        title={`Salom, ${profile?.fullname ?? user?.fullname ?? 'shifokor'}`}
+        description={
+          profile?.specialty
+            ? `${profile.specialty.name} yo'nalishi — bilimingizni sinang va reytingda ko'tariling.`
+            : 'Imtihon topshirish uchun avval profilda mutaxassislikni tanlang.'
+        }
+        action={
+          <Button asChild>
+            <Link to={ROUTES.exams}>Imtihonga kirish</Link>
+          </Button>
+        }
+      />
 
       <AsyncState
         isLoading={isLoading}
         isError={isError}
         errorMessage={(error as ApiError | null)?.message}
       >
-        <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <StatCard
-              icon={Target}
-              tone="blue"
-              label="Oxirgi natija"
-              value={stats?.latestAttempt ? `${stats.latestAttempt.score}%` : DASH}
-              hint={
-                stats?.latestAttempt
-                  ? formatDate(stats.latestAttempt.completedAt)
-                  : 'Hali imtihon topshirilmagan'
-              }
-            />
-            <StatCard
-              icon={Trophy}
-              tone="emerald"
-              label="Eng yuqori natija"
-              value={stats?.bestScore !== null && stats?.bestScore !== undefined ? `${stats.bestScore}%` : DASH}
-              hint="Barcha urinishlar bo'yicha"
-            />
-            <StatCard
-              icon={ClipboardCheck}
-              tone="blue"
-              label="Muvaffaqiyatli imtihonlar"
-              value={`${stats?.passedAttempts ?? 0} / ${stats?.completedAttempts ?? 0}`}
-              hint="O'tgan / yakunlangan"
-            />
-            <StatCard
-              icon={Award}
-              tone="violet"
-              label="Sertifikatlar"
-              value={stats?.certificatesCount ?? 0}
-              hint="Berilgan sertifikatlar soni"
-            />
-            <StatCard
-              icon={TrendingUp}
-              tone="amber"
-              label="O'rtacha natija"
-              value={stats?.averageScore !== null && stats?.averageScore !== undefined ? `${stats.averageScore}%` : DASH}
-              hint="Barcha urinishlar bo'yicha"
-            />
+        <div className="space-y-5">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {statCards.map((stat) => (
+              <StatCard key={stat.label} {...stat} isLoading={isLoading} />
+            ))}
           </div>
 
-          <div className="grid gap-4 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-base">Oxirgi natija</CardTitle>
-                <CardDescription>
-                  So'nggi yakunlangan imtihoningiz haqida ma'lumot
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {stats?.latestAttempt ? (
-                  <LatestAttemptPanel attempt={stats.latestAttempt} />
-                ) : (
-                  <Empty>
-                    <EmptyHeader>
-                      <EmptyMedia variant="icon">
-                        <ClipboardCheck />
-                      </EmptyMedia>
-                      <EmptyTitle>Natija yo'q</EmptyTitle>
-                      <EmptyDescription>
-                        Birinchi imtihonni topshiring — natijangiz shu yerda
-                        ko'rinadi.
-                      </EmptyDescription>
-                    </EmptyHeader>
-                  </Empty>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Profil</CardTitle>
-                <CardDescription>Sertifikatda ko'rinadigan ma'lumotlar</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <dl className="space-y-3 text-sm">
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Mutaxassislik</dt>
-                    <dd className="text-right font-medium">
-                      {profile?.specialty?.name ?? DASH}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Daraja</dt>
-                    <dd className="text-right">
-                      {stats?.currentQualification ? (
-                        <QualificationBadge
-                          qualification={stats.currentQualification}
-                        />
-                      ) : (
-                        DASH
-                      )}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Ish joyi</dt>
-                    <dd className="truncate text-right font-medium">
-                      {profile?.workplace ?? DASH}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Tajriba</dt>
-                    <dd className="text-right font-medium">
-                      {profile?.experienceYears
-                        ? `${profile.experienceYears} yil`
-                        : DASH}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Sertifikat</dt>
-                    <dd className="text-right">
-                      {stats?.latestCertificate ? (
-                        <span className="font-mono text-xs font-medium">
-                          {stats.latestCertificate.certificateId}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">Mavjud emas</span>
-                      )}
-                    </dd>
-                  </div>
-                </dl>
-
-                <div className="grid gap-2">
-                  {stats?.latestCertificate && (
-                    <Button asChild variant="outline" size="sm">
-                      <Link to={ROUTES.certificates}>Sertifikatni yuklab olish</Link>
+          {/* `items-start` — ustunlar bir-birining balandligiga cho'zilmaydi. */}
+          <div className="grid items-start gap-4 xl:grid-cols-[1fr_340px]">
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    Natijalarim dinamikasi
+                  </CardTitle>
+                  <CardAction>
+                    <Button asChild variant="link" size="sm" className="h-auto p-0">
+                      <Link to={ROUTES.results}>Barchasini ko'rish</Link>
                     </Button>
+                  </CardAction>
+                </CardHeader>
+
+                <CardContent className="grid gap-5 lg:grid-cols-[1fr_260px]">
+                  {stats && stats.scoreTrend.length > 1 ? (
+                    <ScoreTrendChart points={stats.scoreTrend} />
+                  ) : (
+                    <Empty className="min-h-64 border-0">
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <ClipboardList />
+                        </EmptyMedia>
+                        <EmptyTitle>Dinamika yo'q</EmptyTitle>
+                        <EmptyDescription>
+                          Ikkinchi imtihondan keyin natijalar grafigi shu yerda
+                          ko'rinadi.
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
                   )}
-                  <Button asChild variant="outline" size="sm">
-                    <Link to={ROUTES.profile}>Profilni tahrirlash</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+
+                  <div className="space-y-1">
+                    <p className="pb-1 text-sm font-medium">
+                      So'nggi imtihonlar
+                    </p>
+
+                    {stats?.recentAttempts.length === 0 && (
+                      <p className="py-4 text-sm text-muted-foreground">
+                        Hali imtihon topshirmagansiz.
+                      </p>
+                    )}
+
+                    {stats?.recentAttempts.map((attempt) => (
+                      <RecentAttempt key={attempt.id} attempt={attempt} />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Mavjud imtihonlar</CardTitle>
+                  <CardAction>
+                    <Button asChild variant="link" size="sm" className="h-auto p-0">
+                      <Link to={ROUTES.exams}>Barchasini ko'rish</Link>
+                    </Button>
+                  </CardAction>
+                </CardHeader>
+
+                <CardContent>
+                  {exams.isLoading ? (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {Array.from({ length: 2 }).map((_, index) => (
+                        <Skeleton key={index} className="h-52 rounded-xl" />
+                      ))}
+                    </div>
+                  ) : exams.data?.length === 0 ? (
+                    <Empty className="border-0">
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <GraduationCap />
+                        </EmptyMedia>
+                        <EmptyTitle>Imtihon yo'q</EmptyTitle>
+                        <EmptyDescription>
+                          Yo'nalishingiz bo'yicha imtihon ochilganda sizga xabar
+                          yuboriladi.
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  ) : (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {exams.data?.slice(0, AVAILABLE_EXAMS).map((exam) => (
+                        <ExamCard key={exam.id} exam={exam} />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="space-y-4">
+              <TopDoctors
+                specialtyId={specialtyId}
+                title={
+                  profile?.specialty
+                    ? `TOP — ${profile.specialty.name}`
+                    : 'TOP shifokorlar'
+                }
+              />
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    E'lonlar va yangiliklar
+                  </CardTitle>
+                  <CardAction>
+                    <Button asChild variant="link" size="sm" className="h-auto p-0">
+                      <Link to={ROUTES.notifications}>Barchasini ko'rish</Link>
+                    </Button>
+                  </CardAction>
+                </CardHeader>
+
+                <CardContent className="space-y-1">
+                  {notifications.isLoading ? (
+                    <div className="space-y-2">
+                      {Array.from({ length: 3 }).map((_, index) => (
+                        <Skeleton key={index} className="h-14 w-full" />
+                      ))}
+                    </div>
+                  ) : notifications.data?.items.length === 0 ? (
+                    <p className="py-6 text-center text-sm text-muted-foreground">
+                      Hozircha xabar yo'q
+                    </p>
+                  ) : (
+                    notifications.data?.items.map((notification) => (
+                      <NotificationItem
+                        key={notification.id}
+                        notification={notification}
+                        compact
+                      />
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="bg-primary/5">
+                <CardContent className="flex items-start gap-3">
+                  <Award className="mt-0.5 size-5 shrink-0 text-primary" />
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-pretty">
+                      Sertifikat olish uchun imtihonni o'tish balidan yuqori
+                      natija bilan topshiring
+                    </p>
+                    <Button asChild size="sm">
+                      <Link to={ROUTES.exams}>Imtihon topshirish</Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </AsyncState>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Oldingi urinishlar</CardTitle>
-          <CardDescription>Topshirilgan imtihonlar tarixi</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AttemptHistoryTable limit={5} />
-        </CardContent>
-      </Card>
     </div>
   )
 }
 
-function LatestAttemptPanel({ attempt }: { attempt: DoctorLatestAttempt }) {
+function RecentAttempt({ attempt }: { attempt: DoctorLatestAttempt }) {
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <p className="font-medium">{attempt.examTitle}</p>
-          <p className="text-sm text-muted-foreground">{attempt.specialtyName}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <QualificationBadge qualification={attempt.qualification} />
-          <Badge variant={attempt.passed ? 'success' : 'secondary'}>
-            {attempt.passed ? "O'tdi" : "O'tmadi"}
-          </Badge>
-        </div>
-      </div>
+    <Link
+      to={ROUTES.results}
+      className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-accent/60"
+    >
+      <span className="min-w-0">
+        <span className="block truncate text-sm">{attempt.examTitle}</span>
+        <span className="block text-xs text-muted-foreground">
+          {formatDate(attempt.completedAt)}
+        </span>
+      </span>
 
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <p className="text-3xl font-semibold tabular-nums">{attempt.score}%</p>
-          <p className="text-xs text-muted-foreground">
-            {formatDate(attempt.completedAt)}
-          </p>
-        </div>
-
-        <Button asChild variant="outline" size="sm">
-          <Link to={buildRoute.attempt(attempt.id)}>Natijani ko'rish</Link>
-        </Button>
-      </div>
-    </div>
+      <span className="flex shrink-0 items-center gap-2">
+        <QualificationBadge qualification={attempt.qualification} />
+        <span
+          className={
+            attempt.passed
+              ? 'text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400'
+              : 'text-sm font-semibold tabular-nums text-destructive'
+          }
+        >
+          {attempt.score}%
+        </span>
+      </span>
+    </Link>
   )
+}
+
+/** "↑ 4% so'nggi imtihonlarda" — o'sish yoki pasayishni bir qarashda ko'rsatadi. */
+function describeChange(change: number | null | undefined): string | undefined {
+  if (change === null || change === undefined || change === 0) {
+    return undefined
+  }
+
+  return `${change > 0 ? '↑' : '↓'} ${Math.abs(change)}% so'nggi imtihonlarda`
 }
