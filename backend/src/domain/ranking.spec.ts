@@ -120,7 +120,12 @@ describe('configurable weights', () => {
   it('follows the configured weights instead of the defaults', () => {
     // Faqat o'rtacha ball hisobga olinsa, bitta urinishdagi 90% ham 90 ball.
     const score = calculateRankingScore(
-      metrics({ attemptCount: 1, passedCount: 0, averageScore: 90, bestScore: 90 }),
+      metrics({
+        attemptCount: 1,
+        passedCount: 0,
+        averageScore: 90,
+        bestScore: 90,
+      }),
       onlyAverage,
     );
 
