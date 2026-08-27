@@ -116,6 +116,7 @@ Quyidagi hisoblar tayyor turadi (faqat lokal ishlash uchun):
 | [docs/qilingan-ishlar.md](docs/qilingan-ishlar.md) | Bosqichma-bosqich bajarilgan ishlar |
 | [docs/uztoz-rating-farqlari.md](docs/uztoz-rating-farqlari.md) | `uztoz-rating` bilan farqlar |
 | [docs/vercel-deploy.md](docs/vercel-deploy.md) | Vercel'ga deploy va environment o'zgaruvchilari |
+| [docs/baza-va-tranzaksiyalar.md](docs/baza-va-tranzaksiyalar.md) | Baza bilan ishlash, tranzaksiyalar va P2028 tahlili |
 
 ---
 
