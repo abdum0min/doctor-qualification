@@ -115,6 +115,7 @@ Quyidagi hisoblar tayyor turadi (faqat lokal ishlash uchun):
 | --- | --- |
 | [docs/qilingan-ishlar.md](docs/qilingan-ishlar.md) | Bosqichma-bosqich bajarilgan ishlar |
 | [docs/uztoz-rating-farqlari.md](docs/uztoz-rating-farqlari.md) | `uztoz-rating` bilan farqlar |
+| [docs/vercel-deploy.md](docs/vercel-deploy.md) | Vercel'ga deploy va environment o'zgaruvchilari |
 
 ---
 
@@ -127,6 +128,7 @@ Quyidagi hisoblar tayyor turadi (faqat lokal ishlash uchun):
 | `JWT_SECRET` | Kamida 32 belgi |
 | `CORS_ORIGIN` | Vergul bilan ajratilgan ro'yxat |
 | `PUBLIC_APP_URL` | Sertifikat QR kodi shu manzilga ishora qiladi |
+| `SWAGGER_ENABLED` | Bo'sh bo'lsa: dev'da yoqilgan, productionda o'chirilgan |
 | `UPLOAD_DIR` | Yuklangan rasmlar papkasi (standart `uploads`) |
 | `MAX_UPLOAD_SIZE_MB` | Bitta rasm uchun chegara (standart 5) |
 | `VITE_API_URL` | Frontend uchun backend manzili |
@@ -134,6 +136,9 @@ Quyidagi hisoblar tayyor turadi (faqat lokal ishlash uchun):
 `.env` git'ga tushmaydi. Yangi o'zgaruvchi qo'shsangiz avval
 `backend/src/config/env.validation.ts` ga, keyin `.env.example` ga qo'shing —
 noto'g'ri konfiguratsiyada ilova umuman ko'tarilmaydi.
+
+Production uchun to'liq ro'yxat va Vercel sozlamalari:
+[docs/vercel-deploy.md](docs/vercel-deploy.md).
 
 ---
 

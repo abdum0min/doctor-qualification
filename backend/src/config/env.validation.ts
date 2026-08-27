@@ -1,5 +1,6 @@
 import { plainToInstance, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -39,6 +40,13 @@ export class EnvironmentVariables {
   @IsString()
   @IsNotEmpty()
   APP_NAME: string = 'Doctor Qualification API';
+
+  /**
+   * Swagger hujjatlari. Bo'sh qoldirilsa productionda o'chirilgan, qolgan
+   * muhitlarda yoqilgan — qiymati `validateEnv` ichida hisoblanadi.
+   */
+  @IsBoolean()
+  SWAGGER_ENABLED: boolean = true;
 
   /** Vergul bilan ajratilgan ro'yxat: `https://app.com,https://admin.app.com` */
   @IsString()
@@ -99,6 +107,17 @@ export function validateEnv(
     excludeExtraneousValues: false,
   });
 
+  /*
+   * Mantiqiy bayroqni `@Transform` bilan hal qilib bo'lmaydi:
+   * `enableImplicitConversion` yoqilgani uchun `'false'` satri
+   * `Boolean('false') === true` ga aylanadi, umuman berilmagan maydonga esa
+   * class-transformer tegmaydi va sinf standarti qolib ketadi.
+   */
+  validated.SWAGGER_ENABLED = parseFlag(
+    config.SWAGGER_ENABLED,
+    !isProductionEnv(validated.NODE_ENV),
+  );
+
   const errors = validateSync(validated, { skipMissingProperties: false });
 
   if (errors.length > 0) {
@@ -110,4 +129,13 @@ export function validateEnv(
   }
 
   return validated;
+}
+
+/** `'true'` / `'false'` satrini o'qiydi; bo'sh bo'lsa standart qiymat. */
+function parseFlag(value: unknown, fallback: boolean): boolean {
+  if (value === undefined || value === null || value === '') {
+    return fallback;
+  }
+
+  return value === true || value === 'true';
 }

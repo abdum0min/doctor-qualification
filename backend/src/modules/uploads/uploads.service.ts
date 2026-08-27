@@ -7,11 +7,13 @@ import {
   Injectable,
   Logger,
   PayloadTooLargeException,
+  ServiceUnavailableException,
   UnsupportedMediaTypeException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { EnvironmentVariables } from 'src/config/env.validation';
+import { IS_SERVERLESS } from 'src/config/runtime';
 
 import { ALLOWED_IMAGE_TYPES, UploadTarget } from './upload-target';
 
@@ -40,6 +42,11 @@ export class UploadsService {
     return PUBLIC_PREFIX;
   }
 
+  /** Serverless'da doimiy fayl tizimi yo'q — yuklash o'chirilgan bo'ladi. */
+  get isEnabled(): boolean {
+    return !IS_SERVERLESS;
+  }
+
   /**
    * Fayl nomi hech qachon mijozdan olinmaydi — tasodifiy nom va MIME turidan
    * kelib chiqqan kengaytma ishlatiladi. Shuning uchun `..` yoki bajariladigan
@@ -49,6 +56,14 @@ export class UploadsService {
     target: UploadTarget,
     file: Express.Multer.File | undefined,
   ): Promise<string> {
+    // Serverless fayl tizimi vaqtinchalik — yozilgan rasm keyingi so'rovda
+    // yo'qoladi. Buni jimgina qabul qilgandan ko'ra ochiq aytgan ma'qul.
+    if (!this.isEnabled) {
+      throw new ServiceUnavailableException(
+        'File uploads need persistent storage and are disabled in this deployment',
+      );
+    }
+
     if (!file?.buffer?.length) {
       throw new BadRequestException('File is empty');
     }
@@ -82,7 +97,7 @@ export class UploadsService {
    * bu asosiy amaliyotni (profil yangilash) to'xtatmasligi kerak.
    */
   async removeByUrl(url: string | null | undefined): Promise<void> {
-    if (!url?.startsWith(`${PUBLIC_PREFIX}/`)) {
+    if (!this.isEnabled || !url?.startsWith(`${PUBLIC_PREFIX}/`)) {
       return;
     }
 

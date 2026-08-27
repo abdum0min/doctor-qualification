@@ -12,7 +12,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "prisma db seed",
-    "build": "nest build",
+    "build": "prisma generate && nest build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "node dist/main",

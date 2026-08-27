@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { EnvironmentVariables } from 'src/config/env.validation';
+import { DB_POOL_SIZE } from 'src/config/runtime';
 import { PrismaClient } from 'src/generated/prisma/client';
 
 @Injectable()
@@ -20,7 +21,8 @@ export class PrismaService
     super({
       adapter: new PrismaPg({
         connectionString: configService.get('DATABASE_URL', { infer: true }),
-        max: 10,
+        // Serverless'da har bir instansiya bitta so'rov bajaradi.
+        max: DB_POOL_SIZE,
         idleTimeoutMillis: 30_000,
         connectionTimeoutMillis: 10_000,
         keepAlive: true,
