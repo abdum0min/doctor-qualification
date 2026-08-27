@@ -60,6 +60,15 @@ export interface AttemptView extends AttemptSummaryView {
   questions: AttemptQuestionView[];
 }
 
+/**
+ * Interaktiv tranzaksiya chegaralari. Prisma standarti — 5000 ms timeout va
+ * 2000 ms maxWait; uzoq bazada (Neon, aylanma ~130 ms) bu juda kam va
+ * yakunlash `P2028` bilan yiqilardi. Tranzaksiya ichidagi so'rovlar soni
+ * endi doimiy, shuning uchun bu chegaralar zaxira sifatida turadi.
+ */
+const TRANSACTION_TIMEOUT_MS = 20_000;
+const TRANSACTION_MAX_WAIT_MS = 10_000;
+
 const summarySelect = {
   id: true,
   status: true,
@@ -310,62 +319,100 @@ export class AttemptsService {
   /**
    * Baholash va yozib qo'yish bitta tranzaksiyada — natija yarim holatda
    * qolmasligi kerak.
+   *
+   * Tranzaksiya ichida imkon qadar kam so'rov bo'lishi shart: Prisma
+   * interaktiv tranzaksiyani `TRANSACTION_TIMEOUT_MS` dan keyin uzadi va
+   * `P2028` qaytaradi. Uzoq bazada (Neon) har bir so'rov ~130 ms, shuning
+   * uchun savol boshiga bitta UPDATE yuborish 40 savolli imtihonda
+   * chegaradan oshib ketardi. Endi baholar ikkita `updateMany` bilan
+   * yoziladi, sertifikat ma'lumoti esa oldindan tayyorlanadi.
    */
   private async finalize(
     attemptId: number,
     expired: boolean,
   ): Promise<AttemptView> {
-    await this.prisma.$transaction(async (tx) => {
-      const snapshot = await tx.examAttempt.findUniqueOrThrow({
-        where: { id: attemptId },
-        select: {
-          doctorProfileId: true,
-          passingScore: true,
-          questions: {
-            select: {
-              id: true,
-              selectedOption: { select: { id: true, isCorrect: true } },
+    const draft = await this.certificatesService.prepareCertificate(attemptId);
+
+    await this.prisma.$transaction(
+      async (tx) => {
+        const snapshot = await tx.examAttempt.findUniqueOrThrow({
+          where: { id: attemptId },
+          select: {
+            doctorProfileId: true,
+            passingScore: true,
+            questions: {
+              select: {
+                id: true,
+                selectedOption: { select: { id: true, isCorrect: true } },
+              },
             },
           },
-        },
-      });
+        });
 
-      const result = this.evaluator.evaluate(snapshot, expired);
+        const result = this.evaluator.evaluate(snapshot, expired);
 
-      await Promise.all(
-        result.gradedQuestions.map((question) =>
-          tx.attemptQuestion.update({
-            where: { id: question.id },
-            data: { isCorrect: question.isCorrect },
-          }),
-        ),
-      );
+        await this.writeGrades(tx, result.gradedQuestions);
 
-      const graded = await tx.examAttempt.update({
-        where: { id: attemptId },
-        data: {
-          status: result.status,
-          completedAt: new Date(),
-          correctCount: result.correctCount,
-          score: result.score,
-          qualification: result.qualification,
-          passed: result.passed,
-        },
-        select: {
-          id: true,
-          doctorProfileId: true,
-          score: true,
-          qualification: true,
-          passed: true,
-        },
-      });
+        const graded = await tx.examAttempt.update({
+          where: { id: attemptId },
+          data: {
+            status: result.status,
+            completedAt: new Date(),
+            correctCount: result.correctCount,
+            score: result.score,
+            qualification: result.qualification,
+            passed: result.passed,
+          },
+          select: {
+            id: true,
+            doctorProfileId: true,
+            score: true,
+            qualification: true,
+            passed: true,
+          },
+        });
 
-      // Natija va sertifikat birgalikda yoziladi — biri yozilib, ikkinchisi
-      // yozilmay qolgan holat bo'lmasligi kerak.
-      await this.certificatesService.issueForAttempt(tx, graded);
-    });
+        // Natija va sertifikat birgalikda yoziladi — biri yozilib, ikkinchisi
+        // yozilmay qolgan holat bo'lmasligi kerak.
+        await this.certificatesService.issueForAttempt(tx, graded, draft);
+      },
+      {
+        timeout: TRANSACTION_TIMEOUT_MS,
+        maxWait: TRANSACTION_MAX_WAIT_MS,
+      },
+    );
 
     return this.loadReview(attemptId);
+  }
+
+  /**
+   * Baholar savol boshiga emas, ikkita guruhda yoziladi — tranzaksiya
+   * ichidagi aylanmalar soni savollar soniga bog'liq bo'lmasligi uchun.
+   */
+  private async writeGrades(
+    tx: Prisma.TransactionClient,
+    graded: { id: number; isCorrect: boolean }[],
+  ): Promise<void> {
+    const correct = graded
+      .filter((question) => question.isCorrect)
+      .map((question) => question.id);
+    const incorrect = graded
+      .filter((question) => !question.isCorrect)
+      .map((question) => question.id);
+
+    if (correct.length > 0) {
+      await tx.attemptQuestion.updateMany({
+        where: { id: { in: correct } },
+        data: { isCorrect: true },
+      });
+    }
+
+    if (incorrect.length > 0) {
+      await tx.attemptQuestion.updateMany({
+        where: { id: { in: incorrect } },
+        data: { isCorrect: false },
+      });
+    }
   }
 
   private async loadReview(attemptId: number): Promise<AttemptView> {

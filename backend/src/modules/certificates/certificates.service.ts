@@ -83,6 +83,21 @@ interface IssuableAttempt {
   passed: boolean | null;
 }
 
+/**
+ * Sertifikat uchun kerak bo'ladigan, tranzaksiyaga bog'liq bo'lmagan
+ * ma'lumot. Uni oldindan o'qib olamiz — tranzaksiya ichidagi har bir so'rov
+ * uning umrini cho'zadi va `P2028` (timeout) xavfini oshiradi.
+ */
+export interface CertificateDraft {
+  certificateId: string;
+  doctorFullname: string;
+  specialtyName: string;
+  examTitle: string;
+  doctorUserId: number;
+  issuedAt: Date;
+  expiresAt: Date;
+}
+
 @Injectable()
 export class CertificatesService {
   constructor(
@@ -92,17 +107,61 @@ export class CertificatesService {
   ) {}
 
   /**
+   * Sertifikat matnini tranzaksiyadan **tashqarida** tayyorlaydi.
+   *
+   * Bu qiymatlar (imtihon nomi, mutaxassislik, shifokor ismi, amal qilish
+   * muddati) urinish natijasiga bog'liq emas, shuning uchun ularni oldindan
+   * o'qish xavfsiz. Raqam ham shu yerda olinadi: Postgres ketma-ketligi
+   * tranzaksiya bilan orqaga qaytmaydi, ya'ni uni ichkarida ushlab turishdan
+   * foyda yo'q — faqat tranzaksiya cho'ziladi.
+   */
+  async prepareCertificate(attemptId: number): Promise<CertificateDraft> {
+    const [details, validityMonths, sequence] = await Promise.all([
+      this.prisma.examAttempt.findUniqueOrThrow({
+        where: { id: attemptId },
+        select: {
+          exam: {
+            select: { title: true, specialty: { select: { name: true } } },
+          },
+          doctorProfile: {
+            select: { user: { select: { id: true, fullname: true } } },
+          },
+        },
+      }),
+      this.settings.certificateValidityMonths(),
+      nextSequence(this.prisma),
+    ]);
+
+    const issuedAt = new Date();
+
+    return {
+      certificateId: buildCertificateId(sequence, issuedAt),
+      doctorFullname: details.doctorProfile.user.fullname,
+      specialtyName: details.exam.specialty.name,
+      examTitle: details.exam.title,
+      doctorUserId: details.doctorProfile.user.id,
+      issuedAt,
+      expiresAt: certificateExpiryDate(issuedAt, validityMonths),
+    };
+  }
+
+  /**
    * Urinish yakunlanayotgan tranzaksiya ichida chaqiriladi — natija va
    * sertifikat birgalikda yoziladi yoki ikkalasi ham yozilmaydi.
+   *
+   * Bu yerda faqat yozuv bo'ladi: o'qishlar `prepareCertificate` da.
    */
   async issueForAttempt(
     tx: Prisma.TransactionClient,
     attempt: IssuableAttempt,
+    draft: CertificateDraft,
   ): Promise<void> {
     if (!attempt.passed || attempt.score === null || !attempt.qualification) {
       return;
     }
 
+    // Takroriy berishdan `Certificate.attemptId` ustidagi unikal cheklov
+    // himoya qiladi; bu tekshiruv esa keraksiz xatoni oldini oladi.
     const existing = await tx.certificate.findUnique({
       where: { attemptId: attempt.id },
       select: { id: true },
@@ -112,46 +171,28 @@ export class CertificatesService {
       return;
     }
 
-    const details = await tx.examAttempt.findUniqueOrThrow({
-      where: { id: attempt.id },
-      select: {
-        exam: {
-          select: { title: true, specialty: { select: { name: true } } },
-        },
-        doctorProfile: {
-          select: { user: { select: { id: true, fullname: true } } },
-        },
-      },
-    });
-
-    const issuedAt = new Date();
-    const certificateId = buildCertificateId(await nextSequence(tx), issuedAt);
-    // Muddat berilgan paytdagi sozlamadan olinadi va hujjatga yoziladi —
-    // sozlama keyin o'zgarsa ham berilgan sertifikat o'zgarmaydi.
-    const validityMonths = await this.settings.certificateValidityMonths();
-
     await tx.certificate.create({
       data: {
-        certificateId,
+        certificateId: draft.certificateId,
         attemptId: attempt.id,
         doctorProfileId: attempt.doctorProfileId,
-        doctorFullname: details.doctorProfile.user.fullname,
-        specialtyName: details.exam.specialty.name,
-        examTitle: details.exam.title,
+        doctorFullname: draft.doctorFullname,
+        specialtyName: draft.specialtyName,
+        examTitle: draft.examTitle,
         score: attempt.score,
         qualification: attempt.qualification,
-        issuedAt,
-        expiresAt: certificateExpiryDate(issuedAt, validityMonths),
+        issuedAt: draft.issuedAt,
+        expiresAt: draft.expiresAt,
       },
     });
 
     // Xabar ham shu tranzaksiyada — sertifikat yozilmasa xabar ham qolmaydi.
     await tx.notification.create({
       data: {
-        userId: details.doctorProfile.user.id,
+        userId: draft.doctorUserId,
         type: NotificationType.CERTIFICATE_ISSUED,
         title: 'Sertifikat berildi',
-        body: `"${details.exam.title}" imtihoni bo'yicha ${certificateId} raqamli sertifikat rasmiylashtirildi.`,
+        body: `"${draft.examTitle}" imtihoni bo'yicha ${draft.certificateId} raqamli sertifikat rasmiylashtirildi.`,
         link: '/certificates',
       },
     });
@@ -340,8 +381,11 @@ export function resolveStatus(certificate: {
   return certificate.expiresAt.getTime() < Date.now() ? 'EXPIRED' : 'VALID';
 }
 
-async function nextSequence(tx: Prisma.TransactionClient): Promise<number> {
-  const [row] = await tx.$queryRaw<{ nextval: bigint }[]>`
+/** Ketma-ketlik tranzaksiyadan tashqarida ham xavfsiz — u orqaga qaytmaydi. */
+async function nextSequence(
+  client: Pick<PrismaService, '$queryRaw'>,
+): Promise<number> {
+  const [row] = await client.$queryRaw<{ nextval: bigint }[]>`
     SELECT nextval('certificate_number_seq')
   `;
 
